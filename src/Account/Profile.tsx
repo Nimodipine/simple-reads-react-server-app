@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import './profile.css';
 
 const ProfileHome = () => {
     const [user, setUser] = useState<any>(null);
-    const [isOwnProfile, setIsOwnProfile] = useState(true);
+    const [isOwnProfile] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
     const [activeTab, setActiveTab] = useState('reviews');
     const [followStats, setFollowStats] = useState({ followersCount: 0, followingCount: 0 });

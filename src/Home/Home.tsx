@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Button, Card, Col, Container, Form, FormControl, Image, ListGroup, Row } from "react-bootstrap";
+import { Card, Col, Container, Form, FormControl, ListGroup, Row } from "react-bootstrap";
 import Navigation from "../Navigation";
 import Header from "../Header";
 import './home.css';
@@ -18,8 +18,7 @@ export interface HomeProps {
     onLogOut?: () => void;
 }
 
-export default function Home({ isLoggedIn, user, genericFeed, personalizedFeed, onLogOut }: HomeProps) {
-    const [draft, setDraft] = useState("");
+export default function Home({ isLoggedIn, user, onLogOut }: HomeProps) {
     const [searchQuery, setSearchQuery] = useState("");
 
     // Mock data for trending books
