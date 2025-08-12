@@ -1,14 +1,20 @@
 import { useState, useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { setCurrentUser, setLoading, setError } from './reducer';
 import './profile.css';
 
 const ProfileHome = () => {
-    const [user, setUser] = useState<any>(null);
+    const dispatch = useDispatch();
+    const { currentUser, loading } = useSelector((state: any) => state.account);
+
     const [isOwnProfile] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
     const [activeTab, setActiveTab] = useState('reviews');
     const [followStats, setFollowStats] = useState({ followersCount: 0, followingCount: 0 });
+    const [followers, setFollowers] = useState([]);
+    const [following, setFollowing] = useState([]);
+    const [reviews, setReviews] = useState([]);
     const [isFollowing, setIsFollowing] = useState(false);
-    const [loading, setLoading] = useState(true);
 
     type EditForm = {
         firstName: string;
@@ -16,6 +22,7 @@ const ProfileHome = () => {
         phone: string;
         dateOfBirth: string;
         identity: string;
+        bio: string;
     };
 
     // Form state for editing
@@ -24,113 +31,103 @@ const ProfileHome = () => {
         email: '',
         phone: '',
         dateOfBirth: '',
-        identity: ''
+        identity: '',
+        bio: ''
     });
 
-    // Mock data
-    const mockUser = {
-        id: 'user123',
-        username: 'johndoe',
-        displayName: 'John Doe',
-        bio: 'Full-stack developer passionate about creating amazing user experiences. Love hiking, photography, and good coffee. Always learning new technologies and sharing knowledge with the community.',
-        interests: ['JavaScript', 'React', 'Photography', 'Hiking', 'Coffee', 'Open Source'],
-        isVerified: true,
-        isOnline: true
-    };
-
-    const mockFollowStats = {
-        followersCount: 1247,
-        followingCount: 389
-    };
-
-    const mockReviews = [
-        {
-            reviewId: '1',
-            title: 'Amazing React Component Library',
-            rating: 5,
-            snippet: 'This library has everything I need for building modern UIs. The components are well-designed, customizable, and thoroughly documented. Highly recommended for any React project!',
-            createdAt: '2024-08-01T00:00:00Z',
-            itemId: 'item1',
-            itemType: 'library'
-        },
-        {
-            reviewId: '2',
-            title: 'Blue Bottle Coffee - Mission District',
-            rating: 4,
-            snippet: 'Perfect place for working remotely. Great atmosphere, excellent single-origin coffee, and reliable WiFi. Can get crowded during peak hours.',
-            createdAt: '2024-07-25T00:00:00Z',
-            itemId: 'item2',
-            itemType: 'venue'
-        },
-        {
-            reviewId: '3',
-            title: 'Figma to React Component Tool',
-            rating: 4,
-            snippet: 'Saves me hours of development time by converting Figma designs to React components. Could use better documentation and TypeScript support.',
-            createdAt: '2024-07-20T00:00:00Z',
-            itemId: 'item3',
-            itemType: 'tool'
-        }
-    ];
-
-    const mockFollowers = [
-        { userId: '1', displayName: 'Alice Smith', username: 'alice_dev' },
-        { userId: '2', displayName: 'Bob Johnson', username: 'bob_designs' },
-        { userId: '3', displayName: 'Carol Wilson', username: 'carol_pm' },
-        { userId: '4', displayName: 'David Brown', username: 'david_ux' },
-        { userId: '5', displayName: 'Emma Davis', username: 'emma_frontend' }
-    ];
-
     useEffect(() => {
-        // Load user data from localStorage (from signup)
-        const currentUser = localStorage.getItem('currentUser');
-        const isLoggedIn = localStorage.getItem('isLoggedIn');
+        if (currentUser) {
+            // Set edit form with current user data
+            setEditForm({
+                firstName: currentUser.firstName || '',
+                email: currentUser.email || '',
+                phone: currentUser.phone || '',
+                dateOfBirth: currentUser.dateOfBirth || '',
+                identity: currentUser.identity || currentUser.role || '',
+                bio: currentUser.bio || ''
+            });
 
-        setTimeout(() => {
-            if (currentUser && isLoggedIn) {
-                // Use actual user data from signup
-                const userData = JSON.parse(currentUser);
-                setUser(userData);
-                setFollowStats(mockFollowStats);
-                setEditForm({
-                    firstName: userData.displayName || userData.firstName,
-                    email: userData.email || '',
-                    phone: userData.phone || '',
-                    dateOfBirth: userData.dateOfBirth || '',
-                    identity: userData.identity || 'reader'
-                });
-            } else {
-                // Fallback to mock data if no user is logged in
-                setUser(mockUser);
-                setFollowStats(mockFollowStats);
-                setEditForm({
-                    firstName: mockUser.displayName,
-                    email: '',
-                    phone: '',
-                    dateOfBirth: '',
-                    identity: 'reader'
-                });
+            // Fetch additional profile data
+            fetchProfileData();
+        }
+    }, [currentUser]);
+
+    const fetchProfileData = async () => {
+        if (!currentUser?._id) return;
+
+        try {
+            dispatch(setLoading(true));
+
+            // Fetch follow stats, followers, following, and reviews
+            const [statsRes, followersRes, followingRes, reviewsRes] = await Promise.all([
+                fetch(`/api/users/${currentUser._id}/stats`, { credentials: 'include' }),
+                fetch(`/api/users/${currentUser._id}/followers`, { credentials: 'include' }),
+                fetch(`/api/users/${currentUser._id}/following`, { credentials: 'include' }),
+                fetch(`/api/users/${currentUser._id}/reviews`, { credentials: 'include' })
+            ]);
+
+            if (statsRes.ok) {
+                const stats = await statsRes.json();
+                setFollowStats(stats);
             }
-            setLoading(false);
-        }, 1000);
-    }, []);
 
-    const handleEditProfile = () => {
-        const updatedUser = {
-            ...user,
-            displayName: editForm.firstName,
-            firstName: editForm.firstName,
-            email: editForm.email,
-            phone: editForm.phone,
-            dateOfBirth: editForm.dateOfBirth,
-            identity: editForm.identity
-        };
-        setUser(updatedUser);
+            if (followersRes.ok) {
+                const followersData = await followersRes.json();
+                setFollowers(followersData);
+            }
 
-        // Update localStorage with new data
-        localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+            if (followingRes.ok) {
+                const followingData = await followingRes.json();
+                setFollowing(followingData);
+            }
 
-        setIsEditing(false);
+            if (reviewsRes.ok) {
+                const reviewsData = await reviewsRes.json();
+                setReviews(reviewsData);
+            }
+
+        } catch (error) {
+            console.error('Error fetching profile data:', error);
+            dispatch(setError('Failed to load profile data'));
+        } finally {
+            dispatch(setLoading(false));
+        }
+    };
+
+    const handleEditProfile = async () => {
+        try {
+            dispatch(setLoading(true));
+
+            const response = await fetch('/api/profile', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                    firstName: editForm.firstName,
+                    email: editForm.email,
+                    phone: editForm.phone,
+                    dateOfBirth: editForm.dateOfBirth,
+                    role: editForm.identity,
+                    bio: editForm.bio
+                }),
+            });
+
+            if (response.ok) {
+                const updatedUser = await response.json();
+                dispatch(setCurrentUser(updatedUser));
+                setIsEditing(false);
+            } else {
+                const error = await response.json();
+                dispatch(setError(error.message || 'Failed to update profile'));
+            }
+        } catch (error) {
+            console.error('Error updating profile:', error);
+            dispatch(setError('Network error. Please try again.'));
+        } finally {
+            dispatch(setLoading(false));
+        }
     };
 
     const getIdentityBadge = (identity: string) => {
@@ -175,6 +172,17 @@ const ProfileHome = () => {
         );
     }
 
+    if (!currentUser) {
+        return (
+            <div className="profile-container">
+                <div className="auth-message">
+                    <h2>Please sign in to view your profile</h2>
+                    <a href="/Account/Signin">Sign In</a>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="profile-container">
             <div className="profile-wrapper">
@@ -187,9 +195,9 @@ const ProfileHome = () => {
                         {/* Avatar */}
                         <div className="avatar-container">
                             <div className="avatar">
-                                {user?.displayName?.[0]?.toUpperCase() || 'U'}
+                                {currentUser?.displayName?.[0]?.toUpperCase() || currentUser?.firstName?.[0]?.toUpperCase() || 'U'}
                             </div>
-                            {user?.isOnline && (
+                            {currentUser?.isOnline && (
                                 <div className="online-indicator"></div>
                             )}
                         </div>
@@ -265,6 +273,17 @@ const ProfileHome = () => {
                                         </select>
                                     </div>
 
+                                    <div className="auth-field">
+                                        <label className="auth-label">Bio</label>
+                                        <textarea
+                                            value={editForm.bio}
+                                            onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
+                                            className="edit-name-input"
+                                            placeholder="Tell us about yourself..."
+                                            rows={3}
+                                        />
+                                    </div>
+
                                     <div className="edit-buttons">
                                         <button
                                             onClick={handleEditProfile}
@@ -284,13 +303,11 @@ const ProfileHome = () => {
                                 <div>
                                     <div className="profile-name-section">
                                         <h1 className="profile-name">
-                                            {user?.displayName || user?.firstName}
+                                            {currentUser?.displayName || currentUser?.firstName}
                                         </h1>
-                                        {user?.isVerified && (
-                                            <div className={getIdentityBadge(user?.identity || 'reader').class}>
-                                                {getIdentityBadge(user?.identity || 'reader').text}
-                                            </div>
-                                        )}
+                                        <div className={getIdentityBadge(currentUser?.identity || currentUser?.role || 'reader').class}>
+                                            {getIdentityBadge(currentUser?.identity || currentUser?.role || 'reader').text}
+                                        </div>
                                     </div>
 
                                     <div className="profile-stats">
@@ -308,7 +325,7 @@ const ProfileHome = () => {
                                         </div>
                                         <div className="stat-item">
                                             <div className="stat-number">
-                                                {mockReviews.length}
+                                                {reviews.length}
                                             </div>
                                             <div className="stat-label">Reviews</div>
                                         </div>
@@ -373,21 +390,23 @@ const ProfileHome = () => {
                                 </h3>
 
                                 <div className="followers-list">
-                                    {mockFollowers.map((follower) => (
-                                        <div key={follower.userId} className="follower-item">
+                                    {followers.length > 0 ? followers.map((follower: any) => (
+                                        <div key={follower._id} className="follower-item">
                                             <div className="follower-avatar followers">
-                                                {follower.displayName?.[0] || follower.username?.[0]}
+                                                {follower.displayName?.[0] || follower.firstName?.[0] || follower.username?.[0]}
                                             </div>
                                             <div className="follower-info">
                                                 <p className="follower-name">
-                                                    {follower.displayName || follower.username}
+                                                    {follower.displayName || follower.firstName || follower.username}
                                                 </p>
                                                 <p className="follower-username">
                                                     @{follower.username}
                                                 </p>
                                             </div>
                                         </div>
-                                    ))}
+                                    )) : (
+                                        <p>No followers yet</p>
+                                    )}
                                 </div>
                             </div>
                         )}
@@ -399,21 +418,23 @@ const ProfileHome = () => {
                                 </h3>
 
                                 <div className="followers-list">
-                                    {mockFollowers.slice(0, 3).map((following) => (
-                                        <div key={following.userId + '_following'} className="follower-item">
+                                    {following.length > 0 ? following.map((followingUser: any) => (
+                                        <div key={followingUser._id} className="follower-item">
                                             <div className="follower-avatar following">
-                                                {following.displayName?.[0] || following.username?.[0]}
+                                                {followingUser.displayName?.[0] || followingUser.firstName?.[0] || followingUser.username?.[0]}
                                             </div>
                                             <div className="follower-info">
                                                 <p className="follower-name">
-                                                    {following.displayName || following.username}
+                                                    {followingUser.displayName || followingUser.firstName || followingUser.username}
                                                 </p>
                                                 <p className="follower-username">
-                                                    @{following.username}
+                                                    @{followingUser.username}
                                                 </p>
                                             </div>
                                         </div>
-                                    ))}
+                                    )) : (
+                                        <p>Not following anyone yet</p>
+                                    )}
                                 </div>
                             </div>
                         )}
@@ -425,8 +446,8 @@ const ProfileHome = () => {
                                 </h3>
 
                                 <div className="content-items">
-                                    {mockReviews.map((review) => (
-                                        <div key={review.reviewId} className="content-detail-item">
+                                    {reviews.length > 0 ? reviews.map((review: any) => (
+                                        <div key={review._id} className="content-detail-item">
                                             <div className="content-detail-header">
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
                                                     <div style={{ display: 'flex' }}>
@@ -439,7 +460,7 @@ const ProfileHome = () => {
                                                         padding: '2px 8px',
                                                         borderRadius: '4px'
                                                     }}>
-                                                        {review.itemType}
+                                                        {review.book?.title || 'Book'}
                                                     </span>
                                                     <span style={{ fontSize: '12px', color: '#6b7280' }}>
                                                         {new Date(review.createdAt).toLocaleDateString()}
@@ -450,10 +471,12 @@ const ProfileHome = () => {
                                                 </h4>
                                             </div>
                                             <p className="content-detail-snippet">
-                                                {review.snippet}
+                                                {review.content}
                                             </p>
                                         </div>
-                                    ))}
+                                    )) : (
+                                        <p>No reviews yet</p>
+                                    )}
                                 </div>
                             </div>
                         )}
@@ -468,23 +491,23 @@ const ProfileHome = () => {
                                     <div className="info-section">
                                         <div className="info-item">
                                             <div className="info-label">👤 Full Name</div>
-                                            <div className="info-value">{user?.displayName || user?.firstName || 'Not provided'}</div>
+                                            <div className="info-value">{currentUser?.displayName || currentUser?.firstName || 'Not provided'}</div>
                                         </div>
 
                                         <div className="info-item">
                                             <div className="info-label">📧 Email Address</div>
-                                            <div className="info-value">{user?.email || 'Not provided'}</div>
+                                            <div className="info-value">{currentUser?.email || 'Not provided'}</div>
                                         </div>
 
                                         <div className="info-item">
                                             <div className="info-label">📱 Phone Number</div>
-                                            <div className="info-value">{user?.phone || 'Not provided'}</div>
+                                            <div className="info-value">{currentUser?.phone || 'Not provided'}</div>
                                         </div>
 
                                         <div className="info-item">
                                             <div className="info-label">🎂 Date of Birth</div>
                                             <div className="info-value">
-                                                {user?.dateOfBirth ? new Date(user.dateOfBirth).toLocaleDateString('en-US', {
+                                                {currentUser?.dateOfBirth ? new Date(currentUser.dateOfBirth).toLocaleDateString('en-US', {
                                                     year: 'numeric',
                                                     month: 'long',
                                                     day: 'numeric'
@@ -494,31 +517,43 @@ const ProfileHome = () => {
 
                                         <div className="info-item">
                                             <div className="info-label">🏷️ Username</div>
-                                            <div className="info-value">@{user?.username || 'Not provided'}</div>
+                                            <div className="info-value">@{currentUser?.username || 'Not provided'}</div>
                                         </div>
 
                                         <div className="info-item">
                                             <div className="info-label">🆔 Identity</div>
-                                            <div className="info-value">{user?.identity?.charAt(0).toUpperCase() + user?.identity?.slice(1) || 'Reader'}</div>
+                                            <div className="info-value">{(currentUser?.identity || currentUser?.role)?.charAt(0).toUpperCase() + (currentUser?.identity || currentUser?.role)?.slice(1) || 'Reader'}</div>
+                                        </div>
+
+                                        <div className="info-item">
+                                            <div className="info-label">📝 Bio</div>
+                                            <div className="info-value">{currentUser?.bio || 'No bio added yet'}</div>
                                         </div>
 
                                         <div className="info-item">
                                             <div className="info-label">📅 Member Since</div>
                                             <div className="info-value">
-                                                {user?.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US', {
+                                                {currentUser?.createdAt ? new Date(currentUser.createdAt).toLocaleDateString('en-US', {
                                                     year: 'numeric',
                                                     month: 'long',
                                                     day: 'numeric'
                                                 }) : 'Not provided'}
                                             </div>
                                         </div>
+
+                                        {currentUser?.interests && currentUser.interests.length > 0 && (
+                                            <div className="info-item">
+                                                <div className="info-label">🎯 Interests</div>
+                                                <div className="info-value">
+                                                    {currentUser.interests.join(', ')}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
                         )}
                     </div>
-
-                    {/* Sidebar removed - no interests section */}
                 </div>
             </div>
         </div>

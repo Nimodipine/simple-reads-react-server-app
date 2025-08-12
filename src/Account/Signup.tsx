@@ -1,7 +1,9 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { FormControl, Button } from "react-bootstrap";
-import "./auth.css"; // Import the CSS file
+import { useDispatch } from "react-redux";
+import { setCurrentUser } from "./reducer";
+import "./auth.css";
 
 interface SignupForm {
     username?: string;
@@ -18,6 +20,8 @@ export default function Signup() {
     const [user, setUser] = useState<SignupForm>({});
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
     const [loading, setLoading] = useState(false);
+    const navigate = useNavigate();
+    const dispatch = useDispatch();
 
     const validateForm = (): boolean => {
         const newErrors: { [key: string]: string } = {};
@@ -92,60 +96,39 @@ export default function Signup() {
         }
 
         setLoading(true);
+        setErrors({});
 
         try {
-            // Store user data in localStorage for demo purposes
-            // In a real app, this would be handled by your backend and authentication system
-            const userData = {
-                id: 'user123',
-                username: user.username,
-                displayName: user.firstName, // Use firstName as displayName
-                firstName: user.firstName,
-                email: user.email,
-                phone: user.phone,
-                dateOfBirth: user.dateOfBirth,
-                identity: user.identity,
-                bio: '', // Empty bio initially
-                interests: [],
-                isVerified: true, // Set to true since they selected an identity
-                isOnline: true,
-                createdAt: new Date().toISOString()
-            };
-
-            // Store in localStorage
-            localStorage.setItem('currentUser', JSON.stringify(userData));
-            localStorage.setItem('isLoggedIn', 'true');
-
-            console.log("Registration successful", userData);
-
-            // TODO: Replace with actual API call
-            /*
-            const response = await fetch('/api/auth/register', {
+            const response = await fetch('/api/users/signup', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
+                credentials: 'include', // Important for session cookies
                 body: JSON.stringify({
                     username: user.username,
                     email: user.email,
                     password: user.password,
-                    confirmPassword: user.confirmPassword,
-                    phone: user.phone,
                     firstName: user.firstName,
+                    phone: user.phone,
                     dateOfBirth: user.dateOfBirth,
+                    role: user.identity, // Map identity to role for backend
                 }),
             });
 
             if (response.ok) {
-                const result = await response.json();
-                console.log("Registration successful", result);
-                // TODO: Redirect to verification page or login
-                // navigate('/verify-email');
+                const userData = await response.json();
+                console.log("Registration successful", userData);
+
+                // Update Redux store with user data
+                dispatch(setCurrentUser(userData));
+
+                // Navigate to home or dashboard
+                navigate('/home');
             } else {
                 const error = await response.json();
                 setErrors({ general: error.message || 'Registration failed' });
             }
-            */
         } catch (error) {
             console.error("Registration error:", error);
             setErrors({ general: 'Network error. Please try again.' });
