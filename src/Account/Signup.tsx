@@ -1,9 +1,12 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FormControl, Button } from "react-bootstrap";
-import { useDispatch } from "react-redux";
-import { setCurrentUser } from "./reducer";
+import { useDispatch, useSelector } from "react-redux";
+import { setCurrentUser, setLoading, setError, clearError } from "./reducer";
+import type { RootState, AppDispatch } from "../store";
 import "./auth.css";
+
+const API_BASE_URL = import.meta.env.VITE_REMOTE_SERVER || 'http://localhost:4000';
 
 interface SignupForm {
     username?: string;
@@ -19,9 +22,9 @@ interface SignupForm {
 export default function Signup() {
     const [user, setUser] = useState<SignupForm>({});
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
-    const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
-    const dispatch = useDispatch();
+    const dispatch = useDispatch<AppDispatch>();
+    const { loading } = useSelector((state: RootState) => state.account);
 
     const validateForm = (): boolean => {
         const newErrors: { [key: string]: string } = {};
@@ -95,16 +98,16 @@ export default function Signup() {
             return;
         }
 
-        setLoading(true);
-        setErrors({});
+        dispatch(setLoading(true));
+        dispatch(clearError());
 
         try {
-            const response = await fetch('/api/users/signup', {
+            const response = await fetch(`${API_BASE_URL}/api/users/signup`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                credentials: 'include', // Important for session cookies
+                credentials: 'include',
                 body: JSON.stringify({
                     username: user.username,
                     email: user.email,
@@ -127,13 +130,16 @@ export default function Signup() {
                 navigate('/home');
             } else {
                 const error = await response.json();
+                dispatch(setError(error.message || 'Registration failed'));
                 setErrors({ general: error.message || 'Registration failed' });
             }
         } catch (error) {
             console.error("Registration error:", error);
-            setErrors({ general: 'Network error. Please try again.' });
+            const errorMessage = 'Network error. Please try again.';
+            dispatch(setError(errorMessage));
+            setErrors({ general: errorMessage });
         } finally {
-            setLoading(false);
+            dispatch(setLoading(false));
         }
     };
 

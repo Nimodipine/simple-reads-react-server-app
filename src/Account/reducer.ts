@@ -1,4 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
+import type { PayloadAction } from "@reduxjs/toolkit";
 
 // Define the User interface to match your backend schema
 interface User {
@@ -33,14 +34,14 @@ const accountSlice = createSlice({
     name: "account",
     initialState,
     reducers: {
-        setCurrentUser: (state, action) => {
+        setCurrentUser: (state, action: PayloadAction<User | null>) => {
             state.currentUser = action.payload;
             state.error = null;
         },
-        setLoading: (state, action) => {
+        setLoading: (state, action: PayloadAction<boolean>) => {
             state.loading = action.payload;
         },
-        setError: (state, action) => {
+        setError: (state, action: PayloadAction<string | null>) => {
             state.error = action.payload;
             state.loading = false;
         },

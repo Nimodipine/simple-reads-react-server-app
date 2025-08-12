@@ -3,6 +3,8 @@ import { useSelector, useDispatch } from 'react-redux';
 import { setCurrentUser, setLoading, setError } from './reducer';
 import './profile.css';
 
+const API_BASE_URL = import.meta.env.VITE_REMOTE_SERVER || 'http://localhost:4000';
+
 const ProfileHome = () => {
     const dispatch = useDispatch();
     const { currentUser, loading } = useSelector((state: any) => state.account);
@@ -60,10 +62,10 @@ const ProfileHome = () => {
 
             // Fetch follow stats, followers, following, and reviews
             const [statsRes, followersRes, followingRes, reviewsRes] = await Promise.all([
-                fetch(`/api/users/${currentUser._id}/stats`, { credentials: 'include' }),
-                fetch(`/api/users/${currentUser._id}/followers`, { credentials: 'include' }),
-                fetch(`/api/users/${currentUser._id}/following`, { credentials: 'include' }),
-                fetch(`/api/users/${currentUser._id}/reviews`, { credentials: 'include' })
+                fetch(`${API_BASE_URL}/api/users/${currentUser._id}/stats`, { credentials: 'include' }),
+                fetch(`${API_BASE_URL}/api/users/${currentUser._id}/followers`, { credentials: 'include' }),
+                fetch(`${API_BASE_URL}/api/users/${currentUser._id}/following`, { credentials: 'include' }),
+                fetch(`${API_BASE_URL}/api/users/${currentUser._id}/reviews`, { credentials: 'include' })
             ]);
 
             if (statsRes.ok) {
@@ -98,7 +100,7 @@ const ProfileHome = () => {
         try {
             dispatch(setLoading(true));
 
-            const response = await fetch('/api/profile', {
+            const response = await fetch(`${API_BASE_URL}/api/profile`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
