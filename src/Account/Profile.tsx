@@ -25,6 +25,12 @@ type User = {
   interests?: string[];
 };
 
+type FollowDoc = {
+  _id: string;
+  follower?: User; // for followers tab
+  following?: User; // for following tab
+};
+
 type Review = {
   _id: string;
   title: string;
@@ -50,8 +56,8 @@ const ProfileHome = () => {
     followersCount: 0,
     followingCount: 0,
   });
-  const [followers, setFollowers] = useState<User[]>([]);
-  const [following, setFollowing] = useState<User[]>([]);
+  const [followers, setFollowers] = useState<FollowDoc[]>([]);
+  const [following, setFollowing] = useState<FollowDoc[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [isFollowing, setIsFollowing] = useState(false);
 
@@ -418,27 +424,30 @@ const ProfileHome = () => {
             {activeTab === "followers" && (
               <div className="card">
                 <h3 className="card-title">👥 Followers</h3>
-
                 <div className="followers-list">
                   {followers.length > 0 ? (
-                    followers.map((follower) => (
-                      <div
-                        key={follower._id}
-                        className="follower-item"
-                        onClick={() => navigateToUserProfile(follower._id)}
-                        style={{ cursor: "pointer" }}
-                      >
-                        <div className="follower-avatar followers">
-                          {follower.username?.[0] || "U"}
+                    followers.map((f) => {
+                      const user = f.follower;
+                      if (!user) return null;
+                      return (
+                        <div
+                          key={user._id}
+                          className="follower-item"
+                          onClick={() => navigateToUserProfile(user._id)}
+                          style={{ cursor: "pointer" }}
+                        >
+                          <div className="follower-avatar followers">
+                            {user.username?.[0] || "U"}
+                          </div>
+                          <div className="follower-info">
+                            <p className="follower-name">{user.username}</p>
+                            <p className="follower-username">
+                              @{user.username}
+                            </p>
+                          </div>
                         </div>
-                        <div className="follower-info">
-                          <p className="follower-name">{follower.username}</p>
-                          <p className="follower-username">
-                            @{follower.username}
-                          </p>
-                        </div>
-                      </div>
-                    ))
+                      );
+                    })
                   ) : (
                     <p>No followers yet</p>
                   )}
@@ -449,29 +458,30 @@ const ProfileHome = () => {
             {activeTab === "following" && (
               <div className="card">
                 <h3 className="card-title">👤 Following</h3>
-
                 <div className="followers-list">
                   {following.length > 0 ? (
-                    following.map((followingUser) => (
-                      <div
-                        key={followingUser._id}
-                        className="follower-item"
-                        onClick={() => navigateToUserProfile(followingUser._id)}
-                        style={{ cursor: "pointer" }}
-                      >
-                        <div className="follower-avatar following">
-                          {followingUser.username?.[0] || "U"}
+                    following.map((f) => {
+                      const user = f.following;
+                      if (!user) return null;
+                      return (
+                        <div
+                          key={user._id}
+                          className="follower-item"
+                          onClick={() => navigateToUserProfile(user._id)}
+                          style={{ cursor: "pointer" }}
+                        >
+                          <div className="follower-avatar following">
+                            {user.username?.[0] || "U"}
+                          </div>
+                          <div className="follower-info">
+                            <p className="follower-name">{user.username}</p>
+                            <p className="follower-username">
+                              @{user.username}
+                            </p>
+                          </div>
                         </div>
-                        <div className="follower-info">
-                          <p className="follower-name">
-                            {followingUser.username}
-                          </p>
-                          <p className="follower-username">
-                            @{followingUser.username}
-                          </p>
-                        </div>
-                      </div>
-                    ))
+                      );
+                    })
                   ) : (
                     <p>Not following anyone yet</p>
                   )}
@@ -597,32 +607,31 @@ const ProfileHome = () => {
                       </div>
                     </div>
 
+                    {/* Show email only if viewing own profile */}
                     {isOwnProfile && (
-                      <>
-                        <div className="info-item">
-                          <div className="info-label">📧 Email Address</div>
-                          <div className="info-value">
-                            {profileUser?.email || "Not provided"}
-                          </div>
+                      <div className="info-item">
+                        <div className="info-label">📧 Email Address</div>
+                        <div className="info-value">
+                          {profileUser?.email || "Not provided"}
                         </div>
-
-                        <div className="info-item">
-                          <div className="info-label">🆔 Identity</div>
-                          <div className="info-value">
-                            {(() => {
-                              const identity =
-                                profileUser?.identity ||
-                                profileUser?.role ||
-                                "reader";
-                              return (
-                                identity.charAt(0).toUpperCase() +
-                                identity.slice(1)
-                              );
-                            })()}
-                          </div>
-                        </div>
-                      </>
+                      </div>
                     )}
+
+                    {/* Identity always shown */}
+                    <div className="info-item">
+                      <div className="info-label">🆔 Identity</div>
+                      <div className="info-value">
+                        {(() => {
+                          const identity =
+                            profileUser?.identity ||
+                            profileUser?.role ||
+                            "reader";
+                          return (
+                            identity.charAt(0).toUpperCase() + identity.slice(1)
+                          );
+                        })()}
+                      </div>
+                    </div>
 
                     <div className="info-item">
                       <div className="info-label">📝 Bio</div>
