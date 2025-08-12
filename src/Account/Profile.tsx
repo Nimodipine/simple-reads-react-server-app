@@ -19,20 +19,14 @@ const ProfileHome = () => {
     const [isFollowing, setIsFollowing] = useState(false);
 
     type EditForm = {
-        firstName: string;
         email: string;
-        phone: string;
-        dateOfBirth: string;
         identity: string;
         bio: string;
     };
 
     // Form state for editing
     const [editForm, setEditForm] = useState<EditForm>({
-        firstName: '',
         email: '',
-        phone: '',
-        dateOfBirth: '',
         identity: '',
         bio: ''
     });
@@ -41,10 +35,7 @@ const ProfileHome = () => {
         if (currentUser) {
             // Set edit form with current user data
             setEditForm({
-                firstName: currentUser.firstName || '',
                 email: currentUser.email || '',
-                phone: currentUser.phone || '',
-                dateOfBirth: currentUser.dateOfBirth || '',
                 identity: currentUser.identity || currentUser.role || '',
                 bio: currentUser.bio || ''
             });
@@ -107,10 +98,7 @@ const ProfileHome = () => {
                 },
                 credentials: 'include',
                 body: JSON.stringify({
-                    firstName: editForm.firstName,
                     email: editForm.email,
-                    phone: editForm.phone,
-                    dateOfBirth: editForm.dateOfBirth,
                     role: editForm.identity,
                     bio: editForm.bio
                 }),
@@ -197,7 +185,7 @@ const ProfileHome = () => {
                         {/* Avatar */}
                         <div className="avatar-container">
                             <div className="avatar">
-                                {currentUser?.displayName?.[0]?.toUpperCase() || currentUser?.firstName?.[0]?.toUpperCase() || 'U'}
+                                {currentUser?.username?.[0]?.toUpperCase() || 'U'}
                             </div>
                             {currentUser?.isOnline && (
                                 <div className="online-indicator"></div>
@@ -210,19 +198,6 @@ const ProfileHome = () => {
                                 <div className="edit-form">
                                     <div className="auth-field">
                                         <label className="auth-label">
-                                            First Name <span className="required">*</span>
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={editForm.firstName}
-                                            onChange={(e) => setEditForm({ ...editForm, firstName: e.target.value })}
-                                            className="edit-name-input"
-                                            placeholder="First Name"
-                                        />
-                                    </div>
-
-                                    <div className="auth-field">
-                                        <label className="auth-label">
                                             Email Address <span className="required">*</span>
                                         </label>
                                         <input
@@ -231,32 +206,6 @@ const ProfileHome = () => {
                                             onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
                                             className="edit-name-input"
                                             placeholder="Email Address"
-                                        />
-                                    </div>
-
-                                    <div className="auth-field">
-                                        <label className="auth-label">
-                                            Phone Number <span className="required">*</span>
-                                        </label>
-                                        <input
-                                            type="tel"
-                                            value={editForm.phone}
-                                            onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                                            className="edit-name-input"
-                                            placeholder="Phone Number"
-                                        />
-                                    </div>
-
-                                    <div className="auth-field">
-                                        <label className="auth-label">
-                                            Date of Birth <span className="required">*</span>
-                                        </label>
-                                        <input
-                                            type="date"
-                                            value={editForm.dateOfBirth}
-                                            onChange={(e) => setEditForm({ ...editForm, dateOfBirth: e.target.value })}
-                                            className="edit-name-input"
-                                            max={new Date().toISOString().split('T')[0]}
                                         />
                                     </div>
 
@@ -305,7 +254,7 @@ const ProfileHome = () => {
                                 <div>
                                     <div className="profile-name-section">
                                         <h1 className="profile-name">
-                                            {currentUser?.displayName || currentUser?.firstName}
+                                            {currentUser?.username}
                                         </h1>
                                         <div className={getIdentityBadge(currentUser?.identity || currentUser?.role || 'reader').class}>
                                             {getIdentityBadge(currentUser?.identity || currentUser?.role || 'reader').text}
@@ -395,11 +344,11 @@ const ProfileHome = () => {
                                     {followers.length > 0 ? followers.map((follower: any) => (
                                         <div key={follower._id} className="follower-item">
                                             <div className="follower-avatar followers">
-                                                {follower.displayName?.[0] || follower.firstName?.[0] || follower.username?.[0]}
+                                                {follower.username?.[0] || 'U'}
                                             </div>
                                             <div className="follower-info">
                                                 <p className="follower-name">
-                                                    {follower.displayName || follower.firstName || follower.username}
+                                                    {follower.username}
                                                 </p>
                                                 <p className="follower-username">
                                                     @{follower.username}
@@ -423,11 +372,11 @@ const ProfileHome = () => {
                                     {following.length > 0 ? following.map((followingUser: any) => (
                                         <div key={followingUser._id} className="follower-item">
                                             <div className="follower-avatar following">
-                                                {followingUser.displayName?.[0] || followingUser.firstName?.[0] || followingUser.username?.[0]}
+                                                {followingUser.username?.[0] || 'U'}
                                             </div>
                                             <div className="follower-info">
                                                 <p className="follower-name">
-                                                    {followingUser.displayName || followingUser.firstName || followingUser.username}
+                                                    {followingUser.username}
                                                 </p>
                                                 <p className="follower-username">
                                                     @{followingUser.username}
@@ -492,34 +441,13 @@ const ProfileHome = () => {
                                 <div className="content-items">
                                     <div className="info-section">
                                         <div className="info-item">
-                                            <div className="info-label">👤 Full Name</div>
-                                            <div className="info-value">{currentUser?.displayName || currentUser?.firstName || 'Not provided'}</div>
+                                            <div className="info-label">👤 Username</div>
+                                            <div className="info-value">@{currentUser?.username || 'Not provided'}</div>
                                         </div>
 
                                         <div className="info-item">
                                             <div className="info-label">📧 Email Address</div>
                                             <div className="info-value">{currentUser?.email || 'Not provided'}</div>
-                                        </div>
-
-                                        <div className="info-item">
-                                            <div className="info-label">📱 Phone Number</div>
-                                            <div className="info-value">{currentUser?.phone || 'Not provided'}</div>
-                                        </div>
-
-                                        <div className="info-item">
-                                            <div className="info-label">🎂 Date of Birth</div>
-                                            <div className="info-value">
-                                                {currentUser?.dateOfBirth ? new Date(currentUser.dateOfBirth).toLocaleDateString('en-US', {
-                                                    year: 'numeric',
-                                                    month: 'long',
-                                                    day: 'numeric'
-                                                }) : 'Not provided'}
-                                            </div>
-                                        </div>
-
-                                        <div className="info-item">
-                                            <div className="info-label">🏷️ Username</div>
-                                            <div className="info-value">@{currentUser?.username || 'Not provided'}</div>
                                         </div>
 
                                         <div className="info-item">
