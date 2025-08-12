@@ -24,6 +24,7 @@ export default function App() {
           <Route path="/Account/Signin" element={<Signin />} />
           <Route path="/Account/Signup" element={<Signup />} />
           <Route path="/Account/Profile" element={<Profile />} />
+          <Route path="/Account/Profile/:userId" element={<Profile />} />
         </Routes>
       </Provider>
     </HashRouter>
