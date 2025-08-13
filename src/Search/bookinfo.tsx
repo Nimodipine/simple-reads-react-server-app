@@ -96,6 +96,7 @@ const BookInfo: React.FC = () => {
     const [isSubmittingReview, setIsSubmittingReview] = useState(false);
     const [reviewError, setReviewError] = useState<string | null>(null);
     const [reviewSuccess, setReviewSuccess] = useState<string | null>(null);
+    const [isEditingReview, setIsEditingReview] = useState(false);
 
     // --------- Fetchers ----------
     const fetchCurrentUser = async () => {
@@ -283,14 +284,14 @@ const BookInfo: React.FC = () => {
         const userReview = reviews.find(
             (r) => currentUser && r.user._id === currentUser._id
         );
-        const isEditing = !!userReview;
+        const isEditing = isEditingReview && !!userReview;
 
         try {
             let response;
-            if (isEditing) {
+            if (isEditing && userReview) {
                 // Update existing review
                 response = await fetch(
-                    `${API_BASE_URL}/api/reviews/${userReview!._id}`,
+                    `${API_BASE_URL}/api/reviews/${userReview._id}`,
                     {
                         method: "PUT",
                         headers: {
@@ -325,6 +326,7 @@ const BookInfo: React.FC = () => {
                 setReviewTitle("");
                 setReviewContent("");
                 setReviewRating(0);
+                setIsEditingReview(false);
                 await fetchBookReviews();
                 await fetchBookDetails();
                 setReviewError(null);
@@ -650,6 +652,7 @@ const BookInfo: React.FC = () => {
                                                                 setReviewTitle(review.title);
                                                                 setReviewContent(review.content);
                                                                 setReviewRating(review.rating);
+                                                                setIsEditingReview(true);
                                                             }}
                                                             className="me-2"
                                                         >
@@ -696,20 +699,16 @@ const BookInfo: React.FC = () => {
                     </section>
                 )}
 
-                {/* SECTION 3: Add Review Form */}
-                {currentUser && !userHasReviewed ? (
+                {/* SECTION 3: Add/Edit Review Form */}
+                {currentUser && (!userHasReviewed || isEditingReview) ? (
                     <section className="add-review-card mb-4">
                         <Card>
                             <Card.Header>
-                                <h5 className="m-0">Add Your Review</h5>
+                                <h5 className="m-0">
+                                    {isEditingReview ? "Edit Your Review" : "Add Your Review"}
+                                </h5>
                             </Card.Header>
                             <Card.Body>
-                                <Alert variant="info" className="mb-3">
-                                    <small>
-                                        Note: Using temporary authentication for testing. The review
-                                        will likely still fail due to backend session issues.
-                                    </small>
-                                </Alert>
                                 <Form onSubmit={handleSubmitReview}>
                                     {reviewError && (
                                         <Alert variant="danger" className="mb-3">
@@ -765,10 +764,10 @@ const BookInfo: React.FC = () => {
                                                         size="sm"
                                                         className="me-2"
                                                     />
-                                                    Submitting...
+                                                    {isEditingReview ? "Updating..." : "Submitting..."}
                                                 </>
                                             ) : (
-                                                "Submit Review"
+                                                isEditingReview ? "Update Review" : "Submit Review"
                                             )}
                                         </Button>
                                         <Button
@@ -780,6 +779,7 @@ const BookInfo: React.FC = () => {
                                                 setReviewRating(0);
                                                 setReviewError(null);
                                                 setReviewSuccess(null);
+                                                setIsEditingReview(false);
                                             }}
                                         >
                                             Clear

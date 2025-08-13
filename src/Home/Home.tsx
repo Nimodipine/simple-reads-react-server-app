@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Card, Col, Container, Form, FormControl, ListGroup, Row } from "react-bootstrap";
+import { FaTimes } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
 import Navigation from "../Navigation";
 import Header from "../Header";
 import './home.css';
@@ -32,6 +34,14 @@ interface Book {
     internalRatingsCount?: number;
     viewCount?: number;
     favoriteCount?: number;
+    description?: string;
+    publishedDate?: string;
+    pageCount?: number;
+    language?: string;
+    averageRating?: number;
+    ratingsCount?: number;
+    previewLink?: string;
+    infoLink?: string;
 }
 
 interface Review {
@@ -57,6 +67,7 @@ export default function Home({ isLoggedIn = false, user, onLogOut }: HomeProps) 
     const [topReviews, setTopReviews] = useState<Review[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const navigate = useNavigate();
 
     useEffect(() => {
         fetchHomeData();
@@ -159,21 +170,58 @@ export default function Home({ isLoggedIn = false, user, onLogOut }: HomeProps) 
 
     const handleSearch = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (searchQuery.trim()) {
-            // Navigate to search results page or implement search functionality
-            window.location.href = `/search?q=${encodeURIComponent(searchQuery.trim())}`;
+        if (!searchQuery.trim()) return;
+
+        try {
+            const url = `${API_BASE_URL}/api/books/search?q=${encodeURIComponent(searchQuery.trim())}&maxResults=1`;
+            const res = await fetch(url, { credentials: "include" });
+            if (!res.ok) throw new Error("Search failed");
+
+            const data = await res.json();
+            if (data.success && data.books.length > 0) {
+                // Navigate to the first matching book's details page
+                navigate(`/details/${data.books[0].googleId}`);
+            } else {
+                // No book found — optionally show message or fall back to search page
+                navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+            }
+        } catch (err) {
+            console.error("Error searching:", err);
+            navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
         }
     };
 
-    const renderStars = (rating: number) => {
-        return [...Array(5)].map((_, i) => (
-            <span
-                key={i}
-                className={i < rating ? 'star-rating' : 'star-rating-empty'}
-            >
-                ★
-            </span>
-        ));
+
+    const handleBookClick = (book: Book) => {
+        // Navigate to details page with the book's Google ID
+        navigate(`/details/${book.googleId}`);
+    };
+
+    const renderStars = (rating: number, ratingsCount?: number) => {
+        if (!rating) return null;
+
+        const stars = [];
+        const fullStars = Math.floor(rating);
+        const hasHalfStar = rating % 1 >= 0.5;
+
+        for (let i = 0; i < 5; i++) {
+            if (i < fullStars) {
+                stars.push(<span key={i} className="star-filled">★</span>);
+            } else if (i === fullStars && hasHalfStar) {
+                stars.push(<span key={i} className="star-half">★</span>);
+            } else {
+                stars.push(<span key={i} className="star-empty">☆</span>);
+            }
+        }
+
+        return (
+            <div className="book-rating">
+                <div className="stars">{stars}</div>
+                <span className="rating-text">
+                    {rating.toFixed(1)} {ratingsCount && `(${ratingsCount})`}
+                </span>
+            </div>
+        );
     };
 
     const formatDate = (dateString: string) => {
@@ -237,6 +285,8 @@ export default function Home({ isLoggedIn = false, user, onLogOut }: HomeProps) 
                                     <h2 className="section-title">Discover Your Next Great Read</h2>
                                     <p className="section-subtitle">Search for books, authors, reviews, and more</p>
                                 </div>
+
+                                {/* Enhanced Search Form */}
                                 <Form role="search" className="d-flex justify-content-center search-form" onSubmit={handleSearch}>
                                     <div className="search-input-container">
                                         <FormControl
@@ -255,6 +305,16 @@ export default function Home({ isLoggedIn = false, user, onLogOut }: HomeProps) 
                                                 e.target.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
                                             }}
                                         />
+                                        {searchQuery && (
+                                            <button
+                                                type="button"
+                                                className="clear-search-btn"
+                                                onClick={() => setSearchQuery('')}
+                                                aria-label="Clear search"
+                                            >
+                                                <FaTimes />
+                                            </button>
+                                        )}
                                     </div>
                                 </Form>
                             </section>
@@ -287,7 +347,7 @@ export default function Home({ isLoggedIn = false, user, onLogOut }: HomeProps) 
                                             {trendingBooks.length > 0 ? (
                                                 trendingBooks.map((book, index) => (
                                                     <div key={book._id} className="book-card">
-                                                        <Card className="h-100 book-card-clickable">
+                                                        <Card className="h-100 book-card-clickable" onClick={() => handleBookClick(book)} style={{ cursor: 'pointer' }}>
                                                             <Card.Body className="p-3">
                                                                 <div className="d-flex align-items-center justify-content-between mb-2">
                                                                     <span className="badge bg-primary rounded-circle ranking-badge">
@@ -416,7 +476,6 @@ export default function Home({ isLoggedIn = false, user, onLogOut }: HomeProps) 
                                     </section>
                                 </Col>
                             </Row>
-
                         </Col>
                     </Row>
                 </Container>
