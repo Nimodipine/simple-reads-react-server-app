@@ -11,7 +11,7 @@ export interface HeaderProps {
     onLogOut?: () => void;
 }
 
-export default function Header({ isLoggedIn, user, onLogOut }: HeaderProps) {
+export default function Header({ isLoggedIn, onLogOut }: HeaderProps) {
     const navigate = useNavigate();
 
     const handleSignOut = async () => {
