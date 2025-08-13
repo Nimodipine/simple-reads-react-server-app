@@ -1,0 +1,248 @@
+/* AddReview Component Styles */
+
+.add-review-page {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding-bottom: 2rem;
+}
+
+.navigation-section {
+    margin-bottom: 2rem;
+}
+
+.back-button {
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    padding: 0.5rem 1.5rem;
+    border: 2px solid #667eea;
+    background: rgba(255, 255, 255, 0.9);
+    color: #667eea;
+}
+
+.back-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    background: white;
+    border-color: #764ba2;
+    color: #764ba2;
+}
+
+.add-review-card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    background: white;
+    margin: 1rem;
+}
+
+.add-review-header {
+    background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+    border-bottom: 1px solid #e9ecef;
+    border-radius: 15px 15px 0 0;
+    padding: 1.5rem 2rem;
+}
+
+.add-review-title {
+    color: #2c3e50;
+    font-weight: 700;
+    font-size: 1.5rem;
+    margin: 0;
+    text-align: center;
+}
+
+.add-review-body {
+    padding: 2rem;
+}
+
+.review-book-info-section {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: #f8f9fa;
+    border-radius: 10px;
+}
+
+.book-info-display {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.review-book-cover-large {
+    width: 80px;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.review-book-placeholder {
+    width: 80px;
+    height: 120px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 2rem;
+    border-radius: 8px;
+}
+
+.book-title-review {
+    margin: 0;
+    color: #2c3e50;
+    font-weight: 600;
+    font-size: 1.2rem;
+}
+
+.book-authors-review {
+    margin: 0.5rem 0 0 0;
+    color: #666;
+    font-size: 1rem;
+}
+
+.review-form-label {
+    color: #2c3e50;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    font-size: 1rem;
+}
+
+.review-form-input {
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+    padding: 0.75rem;
+}
+
+.review-form-input:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+.rating-input-section {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.stars-container {
+    display: flex;
+}
+
+.star-interactive {
+    color: #e9ecef;
+    transition: color 0.2s ease;
+}
+
+.star-interactive-active {
+    color: #ffc107;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+}
+
+.star-interactive:hover {
+    color: #ffdb4d;
+}
+
+.star-filled {
+    color: #ffc107;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+}
+
+.star-empty {
+    color: #e9ecef;
+}
+
+.rating-value-display {
+    color: #667eea;
+    font-weight: 500;
+    font-size: 1rem;
+}
+
+.submit-section {
+    text-align: center;
+    margin-top: 2rem;
+}
+
+.submit-review-btn {
+    background: linear-gradient(135deg, #27ae60, #2ecc71);
+    border: none;
+    border-radius: 8px;
+    font-weight: 500;
+    padding: 0.75rem 2rem;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.submit-review-btn:hover {
+    background: linear-gradient(135deg, #2ecc71, #58d68d);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.cancel-btn {
+    border-radius: 8px;
+    font-weight: 500;
+    padding: 0.75rem 2rem;
+    transition: all 0.3s ease;
+}
+
+.cancel-btn:hover {
+    transform: translateY(-1px);
+}
+
+.loading-container {
+    padding: 4rem 2rem;
+    text-align: center;
+}
+
+.loading-spinner {
+    color: #667eea;
+    width: 3rem;
+    height: 3rem;
+}
+
+.loading-text {
+    color: #666;
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+.error-alert {
+    border: none;
+    border-radius: 15px;
+    background: linear-gradient(45deg, #fff5f5, #fed7d7);
+    border-left: 4px solid #e53e3e;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .book-info-display {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .review-form-input {
+        max-width: 100% !important;
+    }
+
+    .submit-section {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .submit-review-btn,
+    .cancel-btn {
+        width: 100%;
+        margin: 0 !important;
+    }
+
+    .add-review-card {
+        margin: 0.5rem;
+    }
+
+    .add-review-body {
+        padding: 1.5rem;
+    }
+}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { Container, Card, Button, Alert, Spinner, Form, Modal } from "react-bootstrap";
+import { Container, Card, Button, Alert, Spinner } from "react-bootstrap";
 import { FaArrowLeft, FaStar, FaUser, FaPlus, FaEdit, FaTrash } from "react-icons/fa";
 import "./detail.css";
 import "./bookinfo.css";
@@ -78,12 +78,8 @@ const BookInfo: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [reviewsLoading, setReviewsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [isFavorited, setIsFavorited] = useState(false);
-    const [showReviewModal, setShowReviewModal] = useState(false);
-    const [editingReview, setEditingReview] = useState<Review | null>(null);
-    const [newReview, setNewReview] = useState({ rating: 5, title: "", content: "" });
-    const [submitLoading, setSubmitLoading] = useState(false);
-    const [favoriteLoading, setFavoriteLoading] = useState(false);
+    const [, setIsFavorited] = useState(false);
+    const [] = useState(false);
 
     // --------- Fetchers ----------
     const fetchCurrentUser = async () => {
@@ -164,48 +160,25 @@ const BookInfo: React.FC = () => {
     }, [googleId, currentUser]);
 
     // --------- Helpers ----------
-    const renderStars = (
-        rating: number,
-        ratingsCount?: number,
-        showCount = true,
-        interactive = false,
-        onRatingChange?: (rating: number) => void
-    ) => {
-        if (!rating && !interactive) return null;
+    const renderStars = (rating: number, ratingsCount?: number, showCount = true) => {
+        if (!rating) return null;
         const stars = [];
         const full = Math.floor(rating);
         const half = rating % 1 >= 0.5;
 
         for (let i = 0; i < 5; i++) {
-            const isActive = interactive && i < newReview.rating;
-            const starClass = interactive
-                ? isActive
-                    ? "star-interactive-active"
-                    : "star-interactive"
-                : i < full
-                    ? "star-filled"
-                    : i === full && half
-                        ? "star-half"
-                        : "star-empty";
-            stars.push(
-                <FaStar
-                    key={i}
-                    className={starClass}
-                    onClick={interactive && onRatingChange ? () => onRatingChange(i + 1) : undefined}
-                    style={interactive ? { cursor: "pointer" } : {}}
-                />
-            );
+            const starClass = i < full ? "star-filled" : i === full && half ? "star-half" : "star-empty";
+            stars.push(<FaStar key={i} className={starClass} />);
         }
 
         return (
             <div className="rating-display">
                 <div className="stars">{stars}</div>
-                {showCount && !interactive && (
+                {showCount && (
                     <span className="rating-text">
                         {rating.toFixed(1)} {ratingsCount && `(${ratingsCount} reviews)`}
                     </span>
                 )}
-                {interactive && <span className="rating-value">({rating}/5)</span>}
             </div>
         );
     };
@@ -333,7 +306,12 @@ const BookInfo: React.FC = () => {
                         <div className="reviews-header-content">
                             <h5 className="reviews-title m-0">Add your review</h5>
                             {currentUser && !userHasReviewed && (
-                                <Button variant="light" size="sm" onClick={() => setShowReviewModal(true)} className="write-review-btn">
+                                <Button
+                                    variant="light"
+                                    size="sm"
+                                    onClick={() => navigate(`/book/${googleId}/review`)}
+                                    className="write-review-btn"
+                                >
                                     <FaPlus className="me-1" />
                                     Write Review
                                 </Button>
@@ -359,7 +337,10 @@ const BookInfo: React.FC = () => {
                                         <h6>No reviews yet</h6>
                                         <p>Be the first to share your thoughts about this book!</p>
                                         {currentUser && (
-                                            <Button variant="primary" onClick={() => setShowReviewModal(true)}>
+                                            <Button
+                                                variant="primary"
+                                                onClick={() => navigate(`/book/${googleId}/review`)}
+                                            >
                                                 Write the First Review
                                             </Button>
                                         )}
@@ -382,11 +363,7 @@ const BookInfo: React.FC = () => {
                                                                 <Button
                                                                     variant="outline-secondary"
                                                                     size="sm"
-                                                                    onClick={() => {
-                                                                        setEditingReview(review);
-                                                                        setNewReview({ rating: review.rating, title: review.title, content: review.content });
-                                                                        setShowReviewModal(true);
-                                                                    }}
+                                                                    onClick={() => navigate(`/book/${googleId}/review?edit=${review._id}`)}
                                                                     className="me-2"
                                                                 >
                                                                     <FaEdit />
@@ -429,130 +406,6 @@ const BookInfo: React.FC = () => {
                     </div>
                 </section>
             </Container>
-
-            {/* Review Modal (inside same root) */}
-            <Modal
-                show={showReviewModal}
-                onHide={() => {
-                    setShowReviewModal(false);
-                    setEditingReview(null);
-                    setNewReview({ rating: 5, title: "", content: "" });
-                }}
-                size="lg"
-                className="review-modal"
-            >
-                <Modal.Header closeButton className="review-modal-header">
-                    <Modal.Title>{editingReview ? "Edit Your Review" : "Write a Review"}</Modal.Title>
-                </Modal.Header>
-                <Modal.Body className="review-modal-body">
-                    <div className="review-book-info">
-                        {(book.image || book.thumbnail) && (
-                            <img src={book.image || book.thumbnail!} alt={book.title} className="review-book-cover" />
-                        )}
-                        <div>
-                            <h6>{book.title}</h6>
-                            <p className="text-muted">by {(book.authors || []).join(", ")}</p>
-                        </div>
-                    </div>
-
-                    <Form>
-                        <Form.Group className="mb-3">
-                            <Form.Label className="review-form-label">Your Rating</Form.Label>
-                            <div className="rating-input">
-                                {renderStars(newReview.rating, undefined, false, true, (r) => setNewReview((p) => ({ ...p, rating: r })))}
-                            </div>
-                        </Form.Group>
-
-                        <Form.Group className="mb-3">
-                            <Form.Label className="review-form-label">Review Title</Form.Label>
-                            <Form.Control
-                                type="text"
-                                value={newReview.title}
-                                onChange={(e) => setNewReview((p) => ({ ...p, title: e.target.value }))}
-                                placeholder="Give your review a title..."
-                                className="review-form-input"
-                            />
-                        </Form.Group>
-
-                        <Form.Group className="mb-3">
-                            <Form.Label className="review-form-label">Your Review</Form.Label>
-                            <Form.Control
-                                as="textarea"
-                                rows={4}
-                                value={newReview.content}
-                                onChange={(e) => setNewReview((p) => ({ ...p, content: e.target.value }))}
-                                placeholder="What did you think of this book? Share your thoughts..."
-                                className="review-form-input"
-                            />
-                        </Form.Group>
-                    </Form>
-                </Modal.Body>
-                <Modal.Footer className="review-modal-footer">
-                    <Button
-                        variant="secondary"
-                        onClick={() => {
-                            setShowReviewModal(false);
-                            setEditingReview(null);
-                            setNewReview({ rating: 5, title: "", content: "" });
-                        }}
-                    >
-                        Cancel
-                    </Button>
-                    <Button
-                        variant="primary"
-                        onClick={async () => {
-                            if (!currentUser) return alert("Please log in to write a review");
-                            if (!newReview.title.trim() || !newReview.content.trim()) return;
-
-                            try {
-                                setSubmitLoading(true);
-                                const method = editingReview ? "PUT" : "POST";
-                                const url = editingReview
-                                    ? `${API_BASE_URL}/api/reviews/${editingReview._id}`
-                                    : `${API_BASE_URL}/api/reviews`;
-
-                                const res = await fetch(url, {
-                                    method,
-                                    headers: { "Content-Type": "application/json" },
-                                    body: JSON.stringify({
-                                        book: googleId,
-                                        rating: newReview.rating,
-                                        title: newReview.title,
-                                        content: newReview.content,
-                                    }),
-                                });
-
-                                if (res.ok) {
-                                    setShowReviewModal(false);
-                                    setEditingReview(null);
-                                    setNewReview({ rating: 5, title: "", content: "" });
-                                    fetchBookReviews();
-                                    fetchBookDetails();
-                                } else {
-                                    const d = await res.json();
-                                    alert(d.message || "Error submitting review");
-                                }
-                            } catch (e) {
-                                alert("Error submitting review");
-                            } finally {
-                                setSubmitLoading(false);
-                            }
-                        }}
-                        disabled={submitLoading || !newReview.title.trim() || !newReview.content.trim()}
-                    >
-                        {submitLoading ? (
-                            <>
-                                <Spinner animation="border" size="sm" className="me-2" />
-                                {editingReview ? "Updating..." : "Submitting..."}
-                            </>
-                        ) : editingReview ? (
-                            "Update Review"
-                        ) : (
-                            "Submit Review"
-                        )}
-                    </Button>
-                </Modal.Footer>
-            </Modal>
         </div>
     );
 };
