@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { useNavigate, useParams } from 'react-router-dom';
-import { setCurrentUser, setLoading, setError } from './reducer';
-import './profile.css';
+import { useState, useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { useNavigate, useParams } from "react-router-dom";
+import { setCurrentUser, setLoading, setError } from "./reducer";
+import "./profile.css";
 
-const API_BASE_URL = import.meta.env.VITE_REMOTE_SERVER || 'http://localhost:4000';
+const API_BASE_URL =
+    import.meta.env.VITE_REMOTE_SERVER || "http://localhost:4000";
 
 type EditForm = {
     email: string;
@@ -22,6 +23,12 @@ type User = {
     isOnline?: boolean;
     createdAt?: string;
     interests?: string[];
+};
+
+type FollowDoc = {
+    _id: string;
+    follower?: User; // for followers tab
+    following?: User; // for following tab
 };
 
 type Review = {
@@ -44,62 +51,83 @@ const ProfileHome = () => {
     const [profileUser, setProfileUser] = useState<User | null>(null); // The user whose profile we're viewing
     const [isOwnProfile, setIsOwnProfile] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
-    const [activeTab, setActiveTab] = useState('reviews');
-    const [followStats, setFollowStats] = useState({ followersCount: 0, followingCount: 0 });
-    const [followers, setFollowers] = useState<User[]>([]);
-    const [following, setFollowing] = useState<User[]>([]);
+    const [activeTab, setActiveTab] = useState("reviews");
+    const [followStats, setFollowStats] = useState({
+        followersCount: 0,
+        followingCount: 0,
+    });
+    const [followers, setFollowers] = useState<FollowDoc[]>([]);
+    const [following, setFollowing] = useState<FollowDoc[]>([]);
     const [reviews, setReviews] = useState<Review[]>([]);
     const [isFollowing, setIsFollowing] = useState(false);
+    const [followLoading, setFollowLoading] = useState(false);
 
     // Form state for editing
     const [editForm, setEditForm] = useState<EditForm>({
-        email: '',
-        identity: '',
-        bio: ''
+        email: "",
+        identity: "",
+        bio: "",
     });
 
     useEffect(() => {
-        // Determine whose profile we're viewing
         const viewingUserId = userId || currentUser?._id;
         const isOwn = !userId || userId === currentUser?._id;
 
         setIsOwnProfile(isOwn);
 
         if (viewingUserId) {
-            fetchUserProfile(viewingUserId);
+            fetchUserProfile(viewingUserId, isOwn); // pass fresh value
             fetchProfileData(viewingUserId);
+            // (optional) keep follow state in sync when switching profiles
+            checkFollowStatus(viewingUserId);
         }
     }, [userId, currentUser]);
 
-    const fetchUserProfile = async (viewingUserId: string) => {
+    const checkFollowStatus = async (viewingUserId: string) => {
         try {
-            if (isOwnProfile && currentUser) {
-                // If viewing own profile, use currentUser data
+            const response = await fetch(
+                `${API_BASE_URL}/api/follow/status/${viewingUserId}`,
+                {
+                    credentials: "include",
+                }
+            );
+            if (response.ok) {
+                const { isFollowing } = await response.json();
+                setIsFollowing(isFollowing);
+            }
+        } catch (error) {
+            console.error("Error checking follow status:", error);
+        }
+    };
+
+    const fetchUserProfile = async (viewingUserId: string, isOwn: boolean) => {
+        try {
+            if (isOwn && currentUser) {
                 setProfileUser(currentUser);
                 setEditForm({
-                    email: currentUser.email || '',
-                    identity: currentUser.identity || currentUser.role || '',
-                    bio: currentUser.bio || ''
+                    email: currentUser.email || "",
+                    identity: currentUser.identity || currentUser.role || "",
+                    bio: currentUser.bio || "",
                 });
             } else {
-                // If viewing another user's profile, fetch their data
-                const response = await fetch(`${API_BASE_URL}/api/profile/${viewingUserId}`, {
-                    credentials: 'include'
-                });
+                const response = await fetch(
+                    `${API_BASE_URL}/api/profile/${viewingUserId}`,
+                    { credentials: "include" }
+                );
                 if (response.ok) {
                     const userData = await response.json();
                     setProfileUser(userData);
                 }
             }
         } catch (error) {
-            console.error('Error fetching user profile:', error);
+            console.error("Error fetching user profile:", error);
         }
     };
 
     const navigateToUserProfile = (clickedUserId: string) => {
         if (clickedUserId === currentUser?._id) {
             // Navigate to own profile
-            navigate('/Account/Profile');
+            navigate("/Account/Profile");
         } else {
             // Navigate to other user's profile
             navigate(`/Account/Profile/${clickedUserId}`);
@@ -110,18 +138,40 @@ const ProfileHome = () => {
         try {
             dispatch(setLoading(true));
 
-            // Fetch follow stats, followers, following, and reviews
-            const [statsRes, followersRes, followingRes, reviewsRes] = await Promise.all([
-                fetch(`${API_BASE_URL}/api/users/${viewingUserId}/stats`, { credentials: 'include' }),
-                fetch(`${API_BASE_URL}/api/users/${viewingUserId}/followers`, { credentials: 'include' }),
-                fetch(`${API_BASE_URL}/api/users/${viewingUserId}/following`, { credentials: 'include' }),
-                fetch(`${API_BASE_URL}/api/users/${viewingUserId}/reviews`, { credentials: 'include' })
-            ]);
+            // Use the correct endpoints that exist in routes.js
+            const [followersCountRes, followingCountRes, followersRes, followingRes, reviewsRes] =
+                await Promise.all([
+                    fetch(`${API_BASE_URL}/api/profile/${viewingUserId}/followers/count`, {
+                        credentials: "include",
+                    }),
+                    fetch(`${API_BASE_URL}/api/profile/${viewingUserId}/following/count`, {
+                        credentials: "include",
+                    }),
+                    fetch(`${API_BASE_URL}/api/profile/${viewingUserId}/followers`, {
+                        credentials: "include",
+                    }),
+                    fetch(`${API_BASE_URL}/api/profile/${viewingUserId}/following`, {
+                        credentials: "include",
+                    }),
+                    fetch(`${API_BASE_URL}/api/profile/${viewingUserId}/reviews`, {
+                        credentials: "include",
+                    }),
+                ]);
 
-            if (statsRes.ok) {
-                const stats = await statsRes.json();
-                setFollowStats(stats);
+            // Handle follow stats - combine the count responses
+            const followStats = { followersCount: 0, followingCount: 0 };
+
+            if (followersCountRes.ok) {
+                const { followerCount } = await followersCountRes.json();
+                followStats.followersCount = followerCount;
             }
+
+            if (followingCountRes.ok) {
+                const { followingCount } = await followingCountRes.json();
+                followStats.followingCount = followingCount;
+            }
+
+            setFollowStats(followStats);
 
             if (followersRes.ok) {
                 const followersData = await followersRes.json();
@@ -137,10 +187,9 @@ const ProfileHome = () => {
                 const reviewsData = await reviewsRes.json();
                 setReviews(reviewsData);
             }
-
         } catch (error) {
-            console.error('Error fetching profile data:', error);
-            dispatch(setError('Failed to load profile data'));
+            console.error("Error fetching profile data:", error);
+            dispatch(setError("Failed to load profile data"));
         } finally {
             dispatch(setLoading(false));
         }
@@ -151,15 +200,15 @@ const ProfileHome = () => {
             dispatch(setLoading(true));
 
             const response = await fetch(`${API_BASE_URL}/api/profile`, {
-                method: 'PUT',
+                method: "PUT",
                 headers: {
-                    'Content-Type': 'application/json',
+                    "Content-Type": "application/json",
                 },
-                credentials: 'include',
+                credentials: "include",
                 body: JSON.stringify({
                     email: editForm.email,
                     role: editForm.identity,
-                    bio: editForm.bio
+                    bio: editForm.bio,
                 }),
             });
 
@@ -170,11 +219,11 @@ const ProfileHome = () => {
                 setIsEditing(false);
             } else {
                 const error = await response.json();
-                dispatch(setError(error.message || 'Failed to update profile'));
+                dispatch(setError(error.message || "Failed to update profile"));
             }
         } catch (error) {
-            console.error('Error updating profile:', error);
-            dispatch(setError('Network error. Please try again.'));
+            console.error("Error updating profile:", error);
+            dispatch(setError("Network error. Please try again."));
         } finally {
             dispatch(setLoading(false));
         }
@@ -182,22 +231,60 @@ const ProfileHome = () => {
 
     const getIdentityBadge = (identity: string) => {
         switch (identity) {
-            case 'admin':
-                return { text: '👑 Admin', class: 'verified-badge-admin' };
-            case 'writer':
-                return { text: '✍️ Writer', class: 'verified-badge-writer' };
-            case 'reader':
+            case "admin":
+                return { text: "👑 Admin", class: "verified-badge-admin" };
+            case "writer":
+                return { text: "✍️ Writer", class: "verified-badge-writer" };
+            case "reader":
             default:
-                return { text: '📖 Reader', class: 'verified-badge-reader' };
+                return { text: "📖 Reader", class: "verified-badge-reader" };
         }
     };
 
-    const handleFollow = () => {
-        setIsFollowing(!isFollowing);
-        setFollowStats(prev => ({
-            ...prev,
-            followersCount: prev.followersCount + (isFollowing ? -1 : 1)
-        }));
+    const handleFollow = async () => {
+        if (!profileUser || !currentUser || followLoading) return;
+
+        setFollowLoading(true);
+
+        try {
+            const url = `${API_BASE_URL}/api/follow/${profileUser._id}`;
+            const method = isFollowing ? "DELETE" : "POST";
+
+            const response = await fetch(url, {
+                method,
+                credentials: "include",
+            });
+
+            if (response.ok) {
+                // Update local state
+                const newFollowingState = !isFollowing;
+                setIsFollowing(newFollowingState);
+
+                // Update follower count
+                setFollowStats((prev) => ({
+                    ...prev,
+                    followersCount: prev.followersCount + (newFollowingState ? 1 : -1),
+                }));
+
+                // Refresh followers list to reflect the change
+                const followersRes = await fetch(
+                    `${API_BASE_URL}/api/followers/user/${profileUser._id}`,
+                    { credentials: "include" }
+                );
+                if (followersRes.ok) {
+                    const followersData = await followersRes.json();
+                    setFollowers(followersData);
+                }
+            } else {
+                const error = await response.json();
+                dispatch(setError(error.message || "Failed to update follow status"));
+            }
+        } catch (error) {
+            console.error("Error updating follow status:", error);
+            dispatch(setError("Network error. Please try again."));
+        } finally {
+            setFollowLoading(false);
+        }
     };
 
     const renderStars = (rating: number) => {
@@ -205,11 +292,11 @@ const ProfileHome = () => {
             <span
                 key={i}
                 style={{
-                    color: i < rating ? '#fbbf24' : '#d1d5db',
-                    fontSize: '14px'
+                    color: i < rating ? "#fbbf24" : "#d1d5db",
+                    fontSize: "14px",
                 }}
             >
-                ★
+                ⭐
             </span>
         ));
     };
@@ -236,7 +323,6 @@ const ProfileHome = () => {
     return (
         <div className="profile-container">
             <div className="profile-wrapper">
-
                 {/* Profile Header */}
                 <div className="profile-header">
                     <div className="profile-header-bg"></div>
@@ -245,7 +331,7 @@ const ProfileHome = () => {
                         {/* Avatar */}
                         <div className="avatar-container">
                             <div className="avatar">
-                                {profileUser?.username?.[0]?.toUpperCase() || 'U'}
+                                {profileUser?.username?.[0]?.toUpperCase() || "U"}
                             </div>
                             {profileUser?.isOnline && (
                                 <div className="online-indicator"></div>
@@ -263,7 +349,9 @@ const ProfileHome = () => {
                                         <input
                                             type="email"
                                             value={editForm.email}
-                                            onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                                            onChange={(e) =>
+                                                setEditForm({ ...editForm, email: e.target.value })
+                                            }
                                             className="edit-name-input"
                                             placeholder="Email Address"
                                         />
@@ -275,7 +363,9 @@ const ProfileHome = () => {
                                         </label>
                                         <select
                                             value={editForm.identity}
-                                            onChange={(e) => setEditForm({ ...editForm, identity: e.target.value })}
+                                            onChange={(e) =>
+                                                setEditForm({ ...editForm, identity: e.target.value })
+                                            }
                                             className="edit-name-input"
                                         >
                                             <option value="reader">Reader</option>
@@ -288,7 +378,9 @@ const ProfileHome = () => {
                                         <label className="auth-label">Bio</label>
                                         <textarea
                                             value={editForm.bio}
-                                            onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
+                                            onChange={(e) =>
+                                                setEditForm({ ...editForm, bio: e.target.value })
+                                            }
                                             className="edit-name-input"
                                             placeholder="Tell us about yourself..."
                                             rows={3}
@@ -296,10 +388,7 @@ const ProfileHome = () => {
                                     </div>
 
                                     <div className="edit-buttons">
-                                        <button
-                                            onClick={handleEditProfile}
-                                            className="btn-save"
-                                        >
+                                        <button onClick={handleEditProfile} className="btn-save">
                                             Save Changes
                                         </button>
                                         <button
@@ -313,11 +402,19 @@ const ProfileHome = () => {
                             ) : (
                                 <div>
                                     <div className="profile-name-section">
-                                        <h1 className="profile-name">
-                                            {profileUser?.username}
-                                        </h1>
-                                        <div className={getIdentityBadge(profileUser?.identity || profileUser?.role || 'reader').class}>
-                                            {getIdentityBadge(profileUser?.identity || profileUser?.role || 'reader').text}
+                                        <h1 className="profile-name">{profileUser?.username}</h1>
+                                        <div
+                                            className={
+                                                getIdentityBadge(
+                                                    profileUser?.identity || profileUser?.role || "reader"
+                                                ).class
+                                            }
+                                        >
+                                            {
+                                                getIdentityBadge(
+                                                    profileUser?.identity || profileUser?.role || "reader"
+                                                ).text
+                                            }
                                         </div>
                                     </div>
 
@@ -335,9 +432,7 @@ const ProfileHome = () => {
                                             <div className="stat-label">Following</div>
                                         </div>
                                         <div className="stat-item">
-                                            <div className="stat-number">
-                                                {reviews.length}
-                                            </div>
+                                            <div className="stat-number">{reviews.length}</div>
                                             <div className="stat-label">Reviews</div>
                                         </div>
                                     </div>
@@ -356,17 +451,18 @@ const ProfileHome = () => {
                                         ✏️ Edit Info
                                     </button>
                                 ) : (
-                                    <>
-                                        <button
-                                            onClick={handleFollow}
-                                            className={`btn-primary ${isFollowing ? 'btn-unfollow' : ''}`}
-                                        >
-                                            {isFollowing ? '👤- Unfollow' : '👤+ Follow'}
-                                        </button>
-                                        <button className="btn-secondary">
-                                            💬 Message
-                                        </button>
-                                    </>
+                                    <button
+                                        onClick={handleFollow}
+                                        disabled={followLoading}
+                                        className={`btn-primary ${isFollowing ? "btn-unfollow" : ""}`}
+                                    >
+                                        {followLoading
+                                            ? "..."
+                                            : isFollowing
+                                                ? "👤- Unfollow"
+                                                : "👤+ Follow"
+                                        }
+                                    </button>
                                 )}
                             </div>
                         )}
@@ -376,11 +472,11 @@ const ProfileHome = () => {
                 {/* Navigation Tabs */}
                 <div className="nav-tabs-container">
                     <div className="nav-tabs">
-                        {['followers', 'following', 'reviews', 'info'].map((tab) => (
+                        {["followers", "following", "reviews", "info"].map((tab) => (
                             <button
                                 key={tab}
                                 onClick={() => setActiveTab(tab)}
-                                className={`nav-tab ${activeTab === tab ? 'active' : ''}`}
+                                className={`nav-tab ${activeTab === tab ? "active" : ""}`}
                             >
                                 {tab.charAt(0).toUpperCase() + tab.slice(1)}
                             </button>
@@ -390,210 +486,252 @@ const ProfileHome = () => {
 
                 {/* Content Area */}
                 <div className="content-layout">
-
                     {/* Main Content */}
                     <div className="main-content">
-
-                        {activeTab === 'followers' && (
+                        {activeTab === "followers" && (
                             <div className="card">
-                                <h3 className="card-title">
-                                    👥 Followers
-                                </h3>
-
+                                <h3 className="card-title">👥 Followers</h3>
                                 <div className="followers-list">
-                                    {followers.length > 0 ? followers.map((follower) => (
-                                        <div
-                                            key={follower._id}
-                                            className="follower-item"
-                                            onClick={() => navigateToUserProfile(follower._id)}
-                                            style={{ cursor: 'pointer' }}
-                                        >
-                                            <div className="follower-avatar followers">
-                                                {follower.username?.[0] || 'U'}
-                                            </div>
-                                            <div className="follower-info">
-                                                <p className="follower-name">
-                                                    {follower.username}
-                                                </p>
-                                                <p className="follower-username">
-                                                    @{follower.username}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    )) : (
+                                    {followers.length > 0 ? (
+                                        followers.map((f) => {
+                                            const user = f.follower;
+                                            if (!user) return null;
+                                            return (
+                                                <div
+                                                    key={user._id}
+                                                    className="follower-item"
+                                                    onClick={() => navigateToUserProfile(user._id)}
+                                                    style={{ cursor: "pointer" }}
+                                                >
+                                                    <div className="follower-avatar followers">
+                                                        {user.username?.[0] || "U"}
+                                                    </div>
+                                                    <div className="follower-info">
+                                                        <p className="follower-name">{user.username}</p>
+                                                        <p className="follower-username">
+                                                            @{user.username}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })
+                                    ) : (
                                         <p>No followers yet</p>
                                     )}
                                 </div>
                             </div>
                         )}
 
-                        {activeTab === 'following' && (
+                        {activeTab === "following" && (
                             <div className="card">
-                                <h3 className="card-title">
-                                    👤 Following
-                                </h3>
-
+                                <h3 className="card-title">👤 Following</h3>
                                 <div className="followers-list">
-                                    {following.length > 0 ? following.map((followingUser) => (
-                                        <div
-                                            key={followingUser._id}
-                                            className="follower-item"
-                                            onClick={() => navigateToUserProfile(followingUser._id)}
-                                            style={{ cursor: 'pointer' }}
-                                        >
-                                            <div className="follower-avatar following">
-                                                {followingUser.username?.[0] || 'U'}
-                                            </div>
-                                            <div className="follower-info">
-                                                <p className="follower-name">
-                                                    {followingUser.username}
-                                                </p>
-                                                <p className="follower-username">
-                                                    @{followingUser.username}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    )) : (
+                                    {following.length > 0 ? (
+                                        following.map((f) => {
+                                            const user = f.following;
+                                            if (!user) return null;
+                                            return (
+                                                <div
+                                                    key={user._id}
+                                                    className="follower-item"
+                                                    onClick={() => navigateToUserProfile(user._id)}
+                                                    style={{ cursor: "pointer" }}
+                                                >
+                                                    <div className="follower-avatar following">
+                                                        {user.username?.[0] || "U"}
+                                                    </div>
+                                                    <div className="follower-info">
+                                                        <p className="follower-name">{user.username}</p>
+                                                        <p className="follower-username">
+                                                            @{user.username}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })
+                                    ) : (
                                         <p>Not following anyone yet</p>
                                     )}
                                 </div>
                             </div>
                         )}
 
-                        {activeTab === 'reviews' && (
+                        {activeTab === "reviews" && (
                             <div className="card">
-                                <h3 className="card-title">
-                                    ⭐ All Reviews
-                                </h3>
+                                <h3 className="card-title">⭐ All Reviews</h3>
 
                                 <div className="content-items">
                                     {isOwnProfile ? (
                                         // Show full reviews for own profile
-                                        reviews.length > 0 ? reviews.map((review) => (
-                                            <div key={review._id} className="content-detail-item">
-                                                <div className="content-detail-header">
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-                                                        <div style={{ display: 'flex' }}>
-                                                            {renderStars(review.rating)}
+                                        reviews.length > 0 ? (
+                                            reviews.map((review) => (
+                                                <div key={review._id} className="content-detail-item">
+                                                    <div className="content-detail-header">
+                                                        <div
+                                                            style={{
+                                                                display: "flex",
+                                                                alignItems: "center",
+                                                                gap: "12px",
+                                                                marginBottom: "12px",
+                                                            }}
+                                                        >
+                                                            <div style={{ display: "flex" }}>
+                                                                {renderStars(review.rating)}
+                                                            </div>
+                                                            <span
+                                                                style={{
+                                                                    fontSize: "12px",
+                                                                    color: "#6b7280",
+                                                                    background: "#f3f4f6",
+                                                                    padding: "2px 8px",
+                                                                    borderRadius: "4px",
+                                                                }}
+                                                            >
+                                                                {review.book?.title || "Book"}
+                                                            </span>
+                                                            <span
+                                                                style={{ fontSize: "12px", color: "#6b7280" }}
+                                                            >
+                                                                {new Date(
+                                                                    review.createdAt
+                                                                ).toLocaleDateString()}
+                                                            </span>
                                                         </div>
-                                                        <span style={{
-                                                            fontSize: '12px',
-                                                            color: '#6b7280',
-                                                            background: '#f3f4f6',
-                                                            padding: '2px 8px',
-                                                            borderRadius: '4px'
-                                                        }}>
-                                                            {review.book?.title || 'Book'}
-                                                        </span>
-                                                        <span style={{ fontSize: '12px', color: '#6b7280' }}>
-                                                            {new Date(review.createdAt).toLocaleDateString()}
-                                                        </span>
+                                                        <h4 className="content-detail-title">
+                                                            {review.title}
+                                                        </h4>
                                                     </div>
-                                                    <h4 className="content-detail-title">
-                                                        {review.title}
-                                                    </h4>
+                                                    <p className="content-detail-snippet">
+                                                        {review.content}
+                                                    </p>
                                                 </div>
-                                                <p className="content-detail-snippet">
-                                                    {review.content}
-                                                </p>
-                                            </div>
-                                        )) : (
+                                            ))
+                                        ) : (
                                             <p>No reviews yet</p>
                                         )
-                                    ) : (
-                                        // Show limited reviews for other users' profiles
-                                        reviews.length > 0 ? reviews.map((review) => (
-                                            <div key={review._id} className="content-detail-item">
-                                                <div className="content-detail-header">
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-                                                        <div style={{ display: 'flex' }}>
-                                                            {renderStars(review.rating)}
+                                    ) : // Show limited reviews for other users' profiles
+                                        reviews.length > 0 ? (
+                                            reviews.map((review) => (
+                                                <div key={review._id} className="content-detail-item">
+                                                    <div className="content-detail-header">
+                                                        <div
+                                                            style={{
+                                                                display: "flex",
+                                                                alignItems: "center",
+                                                                gap: "12px",
+                                                                marginBottom: "12px",
+                                                            }}
+                                                        >
+                                                            <div style={{ display: "flex" }}>
+                                                                {renderStars(review.rating)}
+                                                            </div>
+                                                            <span
+                                                                style={{
+                                                                    fontSize: "12px",
+                                                                    color: "#6b7280",
+                                                                    background: "#f3f4f6",
+                                                                    padding: "2px 8px",
+                                                                    borderRadius: "4px",
+                                                                }}
+                                                            >
+                                                                {review.book?.title || "Book"}
+                                                            </span>
+                                                            <span
+                                                                style={{ fontSize: "12px", color: "#6b7280" }}
+                                                            >
+                                                                {new Date(review.createdAt).toLocaleDateString()}
+                                                            </span>
                                                         </div>
-                                                        <span style={{
-                                                            fontSize: '12px',
-                                                            color: '#6b7280',
-                                                            background: '#f3f4f6',
-                                                            padding: '2px 8px',
-                                                            borderRadius: '4px'
-                                                        }}>
-                                                            {review.book?.title || 'Book'}
-                                                        </span>
-                                                        <span style={{ fontSize: '12px', color: '#6b7280' }}>
-                                                            {new Date(review.createdAt).toLocaleDateString()}
-                                                        </span>
+                                                        <h4 className="content-detail-title">
+                                                            {review.title}
+                                                        </h4>
                                                     </div>
-                                                    <h4 className="content-detail-title">
-                                                        {review.title}
-                                                    </h4>
+                                                    <p
+                                                        className="content-detail-snippet"
+                                                        style={{ fontStyle: "italic", color: "#6b7280" }}
+                                                    >
+                                                        Review content is private
+                                                    </p>
                                                 </div>
-                                                <p className="content-detail-snippet" style={{ fontStyle: 'italic', color: '#6b7280' }}>
-                                                    Review content is private
-                                                </p>
-                                            </div>
-                                        )) : (
+                                            ))
+                                        ) : (
                                             <p>No reviews yet</p>
-                                        )
-                                    )}
+                                        )}
                                 </div>
                             </div>
                         )}
 
-                        {activeTab === 'info' && (
+                        {activeTab === "info" && (
                             <div className="card">
-                                <h3 className="card-title">
-                                    📋 Personal Information
-                                </h3>
+                                <h3 className="card-title">📋 Personal Information</h3>
 
                                 <div className="content-items">
                                     <div className="info-section">
                                         <div className="info-item">
                                             <div className="info-label">👤 Username</div>
-                                            <div className="info-value">@{profileUser?.username || 'Not provided'}</div>
+                                            <div className="info-value">
+                                                @{profileUser?.username || "Not provided"}
+                                            </div>
                                         </div>
 
+                                        {/* Show email only if viewing own profile */}
                                         {isOwnProfile && (
-                                            <>
-                                                <div className="info-item">
-                                                    <div className="info-label">📧 Email Address</div>
-                                                    <div className="info-value">{profileUser?.email || 'Not provided'}</div>
+                                            <div className="info-item">
+                                                <div className="info-label">📧 Email Address</div>
+                                                <div className="info-value">
+                                                    {profileUser?.email || "Not provided"}
                                                 </div>
-
-                                                <div className="info-item">
-                                                    <div className="info-label">🆔 Identity</div>
-                                                    <div className="info-value">
-                                                        {(() => {
-                                                            const identity = profileUser?.identity || profileUser?.role || 'reader';
-                                                            return identity.charAt(0).toUpperCase() + identity.slice(1);
-                                                        })()}
-                                                    </div>
-                                                </div>
-                                            </>
+                                            </div>
                                         )}
+
+                                        {/* Identity always shown */}
+                                        <div className="info-item">
+                                            <div className="info-label">🆔 Identity</div>
+                                            <div className="info-value">
+                                                {(() => {
+                                                    const identity =
+                                                        profileUser?.identity ||
+                                                        profileUser?.role ||
+                                                        "reader";
+                                                    return (
+                                                        identity.charAt(0).toUpperCase() + identity.slice(1)
+                                                    );
+                                                })()}
+                                            </div>
+                                        </div>
 
                                         <div className="info-item">
                                             <div className="info-label">📝 Bio</div>
-                                            <div className="info-value">{profileUser?.bio || 'No bio added yet'}</div>
+                                            <div className="info-value">
+                                                {profileUser?.bio || "No bio added yet"}
+                                            </div>
                                         </div>
 
                                         <div className="info-item">
                                             <div className="info-label">📅 Member Since</div>
                                             <div className="info-value">
-                                                {profileUser?.createdAt ? new Date(profileUser.createdAt).toLocaleDateString('en-US', {
-                                                    year: 'numeric',
-                                                    month: 'long',
-                                                    day: 'numeric'
-                                                }) : 'Not provided'}
+                                                {profileUser?.createdAt
+                                                    ? new Date(profileUser.createdAt).toLocaleDateString(
+                                                        "en-US",
+                                                        {
+                                                            year: "numeric",
+                                                            month: "long",
+                                                            day: "numeric",
+                                                        }
+                                                    )
+                                                    : "Not provided"}
                                             </div>
                                         </div>
 
-                                        {profileUser?.interests && profileUser.interests.length > 0 && (
-                                            <div className="info-item">
-                                                <div className="info-label">🎯 Interests</div>
-                                                <div className="info-value">
-                                                    {profileUser.interests.join(', ')}
+                                        {profileUser?.interests &&
+                                            profileUser.interests.length > 0 && (
+                                                <div className="info-item">
+                                                    <div className="info-label">🎯 Interests</div>
+                                                    <div className="info-value">
+                                                        {profileUser.interests.join(", ")}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        )}
+                                            )}
                                     </div>
                                 </div>
                             </div>
