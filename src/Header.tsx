@@ -1,5 +1,8 @@
 import { Button, Navbar } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { setCurrentUser } from "./Account/reducer";
+import type { AppDispatch } from "./store";
 
 export interface HeaderProps {
     isLoggedIn: boolean;
@@ -11,29 +14,43 @@ export interface HeaderProps {
     onLogOut?: () => void;
 }
 
-export default function Header({ isLoggedIn, onLogOut }: HeaderProps) {
+const API_BASE_URL = import.meta.env.VITE_REMOTE_SERVER || 'http://localhost:4000';
+
+export default function Header({ isLoggedIn, user, onLogOut }: HeaderProps) {
     const navigate = useNavigate();
+    const dispatch = useDispatch<AppDispatch>();
 
     const handleSignOut = async () => {
         try {
             // Call the backend signout endpoint
-            const response = await fetch('/api/users/signout', {
+            const response = await fetch(`${API_BASE_URL}/api/users/signout`, {
                 method: 'POST',
                 credentials: 'include'
             });
 
-            if (response.ok) {
+            if (response.ok || response.status === 500) {
+                // Clear Redux state regardless of response
+                // (session might already be expired)
+                dispatch(setCurrentUser(null));
+
                 // Call the optional onLogOut callback if provided
                 if (onLogOut) {
                     onLogOut();
                 }
+
                 // Navigate to home page after signout
                 navigate('/home');
             } else {
-                console.error('Signout failed');
+                console.error('Signout failed with status:', response.status);
+                // Still clear local state even if server call fails
+                dispatch(setCurrentUser(null));
+                navigate('/home');
             }
         } catch (error) {
             console.error('Error during signout:', error);
+            // Clear local state even on network error
+            dispatch(setCurrentUser(null));
+            navigate('/home');
         }
     };
 
@@ -51,6 +68,11 @@ export default function Header({ isLoggedIn, onLogOut }: HeaderProps) {
                 <div className="header-right">
                     {isLoggedIn ? (
                         <div className="auth-buttons d-flex gap-2">
+                            {user && (
+                                <span className="navbar-text me-2">
+                                    Welcome, {user.name}!
+                                </span>
+                            )}
                             <Button
                                 variant="outline-danger"
                                 size="sm"
