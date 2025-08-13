@@ -6,9 +6,6 @@ interface User {
     _id: string;
     username: string;
     email: string;
-    firstName: string;
-    phone: string;
-    dateOfBirth: string;
     role: "reader" | "writer" | "admin";
     avatar?: string;
     bio?: string;

@@ -12,10 +12,7 @@ interface SignupForm {
     username?: string;
     password?: string;
     confirmPassword?: string;
-    firstName?: string;
     email?: string;
-    phone?: string;
-    dateOfBirth?: string;
     identity?: string;
 }
 
@@ -29,13 +26,6 @@ export default function Signup() {
     const validateForm = (): boolean => {
         const newErrors: { [key: string]: string } = {};
 
-        // Required field validations
-        if (!user.firstName?.trim()) {
-            newErrors.firstName = "First name is required";
-        } else if (user.firstName.length < 2) {
-            newErrors.firstName = "First name must be at least 2 characters";
-        }
-
         if (!user.username?.trim()) {
             newErrors.username = "Username is required";
         } else if (user.username.length < 3) {
@@ -48,39 +38,12 @@ export default function Signup() {
             newErrors.email = "Please enter a valid email address";
         }
 
-        if (!user.phone?.trim()) {
-            newErrors.phone = "Phone number is required";
-        } else if (!/^[\+]?[1-9][\d]{0,15}$/.test(user.phone.replace(/[\s\-\(\)]/g, ""))) {
-            newErrors.phone = "Please enter a valid phone number";
-        }
-
-        if (!user.dateOfBirth) {
-            newErrors.dateOfBirth = "Date of birth is required";
-        } else {
-            const birthDate = new Date(user.dateOfBirth);
-            const today = new Date();
-            let age = today.getFullYear() - birthDate.getFullYear();
-            const monthDiff = today.getMonth() - birthDate.getMonth();
-
-            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-                age--;
-            }
-
-            if (age < 13) {
-                newErrors.dateOfBirth = "You must be at least 13 years old to register";
-            }
-        }
-
         if (!user.identity) {
             newErrors.identity = "Please select your identity";
         }
 
         if (!user.password) {
             newErrors.password = "Password is required";
-        } else if (user.password.length < 8) {
-            newErrors.password = "Password must be at least 8 characters";
-        } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(user.password)) {
-            newErrors.password = "Password must contain uppercase, lowercase, and number";
         }
 
         if (!user.confirmPassword) {
@@ -112,9 +75,6 @@ export default function Signup() {
                     username: user.username,
                     email: user.email,
                     password: user.password,
-                    firstName: user.firstName,
-                    phone: user.phone,
-                    dateOfBirth: user.dateOfBirth,
                     role: user.identity, // Map identity to role for backend
                 }),
             });
@@ -167,25 +127,6 @@ export default function Signup() {
 
                 <div className="auth-field">
                     <label className="auth-label">
-                        First Name <span className="required">*</span>
-                    </label>
-                    <FormControl
-                        value={user.firstName ?? ""}
-                        onChange={(e) => handleInputChange('firstName', e.target.value)}
-                        placeholder="Enter your first name"
-                        className={`auth-input signup ${errors.firstName ? 'is-invalid' : ''}`}
-                        autoComplete="given-name"
-                        required
-                    />
-                    {errors.firstName && (
-                        <div className="invalid-feedback d-block">
-                            {errors.firstName}
-                        </div>
-                    )}
-                </div>
-
-                <div className="auth-field">
-                    <label className="auth-label">
                         Username <span className="required">*</span>
                     </label>
                     <FormControl
@@ -219,46 +160,6 @@ export default function Signup() {
                     {errors.email && (
                         <div className="invalid-feedback d-block">
                             {errors.email}
-                        </div>
-                    )}
-                </div>
-
-                <div className="auth-field">
-                    <label className="auth-label">
-                        Phone Number <span className="required">*</span>
-                    </label>
-                    <FormControl
-                        type="tel"
-                        value={user.phone ?? ""}
-                        onChange={(e) => handleInputChange('phone', e.target.value)}
-                        placeholder="Enter your phone number"
-                        className={`auth-input signup ${errors.phone ? 'is-invalid' : ''}`}
-                        autoComplete="tel"
-                        required
-                    />
-                    {errors.phone && (
-                        <div className="invalid-feedback d-block">
-                            {errors.phone}
-                        </div>
-                    )}
-                </div>
-
-                <div className="auth-field">
-                    <label className="auth-label">
-                        Date of Birth <span className="required">*</span>
-                    </label>
-                    <FormControl
-                        type="date"
-                        value={user.dateOfBirth ?? ""}
-                        onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
-                        className={`auth-input signup ${errors.dateOfBirth ? 'is-invalid' : ''}`}
-                        autoComplete="bday"
-                        max={new Date().toISOString().split('T')[0]} // Prevent future dates
-                        required
-                    />
-                    {errors.dateOfBirth && (
-                        <div className="invalid-feedback d-block">
-                            {errors.dateOfBirth}
                         </div>
                     )}
                 </div>
@@ -304,10 +205,6 @@ export default function Signup() {
                             {errors.password}
                         </div>
                     )}
-                    <br />
-                    <small className="form-text text-muted">
-                        Password must be at least 8 characters with uppercase, lowercase, and number
-                    </small>
                 </div>
 
                 <div className="auth-field">
