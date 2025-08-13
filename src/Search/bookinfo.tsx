@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { Container, Card, Button, Alert, Spinner, Form } from "react-bootstrap";
 import {
     FaArrowLeft,
@@ -97,6 +97,17 @@ const BookInfo: React.FC = () => {
     const [reviewError, setReviewError] = useState<string | null>(null);
     const [reviewSuccess, setReviewSuccess] = useState<string | null>(null);
     const [isEditingReview, setIsEditingReview] = useState(false);
+
+    // --------- Navigation Helper ----------
+    const navigateToUserProfile = (userId: string) => {
+        if (userId === currentUser?._id) {
+            // Navigate to own profile
+            navigate("/Account/Profile");
+        } else {
+            // Navigate to other user's profile
+            navigate(`/Account/Profile/${userId}`);
+        }
+    };
 
     // --------- Fetchers ----------
     const fetchCurrentUser = async () => {
@@ -825,12 +836,23 @@ const BookInfo: React.FC = () => {
                                             <div key={review._id} className="review-item">
                                                 <div className="review-header">
                                                     <div className="reviewer-info">
-                                                        <Link
-                                                            to={`/profile/${review.user._id}`}
+                                                        <span
                                                             className="reviewer-name"
+                                                            onClick={() => navigateToUserProfile(review.user._id)}
+                                                            style={{
+                                                                cursor: "pointer",
+                                                                color: "#007bff",
+                                                                textDecoration: "none"
+                                                            }}
+                                                            onMouseOver={(e) => {
+                                                                e.currentTarget.style.textDecoration = "underline";
+                                                            }}
+                                                            onMouseOut={(e) => {
+                                                                e.currentTarget.style.textDecoration = "none";
+                                                            }}
                                                         >
-                                                            {review.user.firstName} {review.user.lastName}
-                                                        </Link>
+                                                            @{review.user.username}
+                                                        </span>
                                                         <span className="review-date">
                                                             {formatDate(review.createdAt)}
                                                         </span>
