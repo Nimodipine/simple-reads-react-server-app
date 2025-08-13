@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Container, Card, Button, Alert, Spinner, Form } from "react-bootstrap";
-import { FaArrowLeft, FaStar, FaUser, FaPlus, FaEdit, FaTrash } from "react-icons/fa";
+import { FaArrowLeft, FaStar, FaUser, FaEdit, FaTrash } from "react-icons/fa";
 import "./detail.css";
 import "./bookinfo.css";
 
