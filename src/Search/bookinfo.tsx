@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Container, Card, Button, Alert, Spinner, Form } from "react-bootstrap";
-import { FaArrowLeft, FaStar, FaUser, FaEdit, FaTrash } from "react-icons/fa";
+import { FaArrowLeft, FaStar, FaUser, FaEdit, FaTrash, FaHeart, FaRegHeart } from "react-icons/fa";
 import "./detail.css";
 import "./bookinfo.css";
 
@@ -78,7 +78,8 @@ const BookInfo: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [reviewsLoading, setReviewsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [, setIsFavorited] = useState(false);
+    const [isFavorited, setIsFavorited] = useState(false);
+    const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
 
     // Review form state
     const [reviewTitle, setReviewTitle] = useState("");
@@ -190,7 +191,56 @@ const BookInfo: React.FC = () => {
                 const favorites = await res.json();
                 setIsFavorited(Array.isArray(favorites) && favorites.some((f: any) => f.book === googleId));
             }
-        } catch { }
+        } catch {
+            setIsFavorited(false);
+        }
+    };
+
+    // --------- Favorite Toggle ----------
+    const handleToggleFavorite = async () => {
+        if (!currentUser) {
+            alert("Please sign in to add books to favorites");
+            return;
+        }
+
+        setIsTogglingFavorite(true);
+
+        try {
+            const method = isFavorited ? "DELETE" : "POST";
+            const url = isFavorited
+                ? `${API_BASE_URL}/api/favorites/${googleId}`
+                : `${API_BASE_URL}/api/favorites`;
+
+            const body = isFavorited ? undefined : JSON.stringify({ book: googleId });
+
+            const response = await fetch(url, {
+                method,
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                credentials: "include",
+                ...(body && { body }),
+            });
+
+            if (response.ok) {
+                setIsFavorited(!isFavorited);
+                console.log(isFavorited ? "Removed from favorites" : "Added to favorites");
+            } else {
+                const errorData = await response.json().catch(() => ({}));
+                console.error("Failed to toggle favorite:", response.status, errorData);
+
+                if (response.status === 401) {
+                    alert("Please sign in again to manage favorites");
+                } else {
+                    alert(errorData.message || "Failed to update favorites");
+                }
+            }
+        } catch (error) {
+            console.error("Network error toggling favorite:", error);
+            alert("Network error. Please try again.");
+        } finally {
+            setIsTogglingFavorite(false);
+        }
     };
 
     // --------- Review Submission ----------
@@ -426,6 +476,28 @@ const BookInfo: React.FC = () => {
                                         </a>
                                     ))}
                                 </div>
+                            </div>
+
+                            {/* Favorite Button above Description */}
+                            <div className="favorite-section">
+                                <Button
+                                    variant={isFavorited ? "danger" : "outline-danger"}
+                                    onClick={handleToggleFavorite}
+                                    disabled={isTogglingFavorite}
+                                    className="favorite-toggle-btn"
+                                >
+                                    {isTogglingFavorite ? (
+                                        <Spinner animation="border" size="sm" className="me-2" />
+                                    ) : (
+                                        <>{isFavorited ? <FaHeart className="me-2" /> : <FaRegHeart className="me-2" />}</>
+                                    )}
+                                    {isTogglingFavorite
+                                        ? "Updating..."
+                                        : isFavorited
+                                            ? "Remove from Favorites"
+                                            : "Add to Favorites"
+                                    }
+                                </Button>
                             </div>
 
                             {/* Description */}

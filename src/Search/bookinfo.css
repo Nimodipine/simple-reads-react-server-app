@@ -441,6 +441,54 @@
     color: white !important;
 }
 
+/* Favorite Section - Above Description */
+.book-info-page .favorite-section {
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.book-info-page .favorite-toggle-btn {
+    border-radius: 25px;
+    font-weight: 600;
+    padding: 0.75rem 2rem;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+    letter-spacing: 0.3px;
+    border: 2px solid #e74c3c;
+    min-width: 200px;
+}
+
+.book-info-page .favorite-toggle-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(231, 76, 60, 0.3);
+}
+
+.book-info-page .favorite-toggle-btn:active {
+    transform: translateY(-1px);
+}
+
+.book-info-page .favorite-toggle-btn.btn-danger {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    border-color: #e74c3c;
+    color: white;
+}
+
+.book-info-page .favorite-toggle-btn.btn-danger:hover {
+    background: linear-gradient(135deg, #c0392b, #a93226);
+    border-color: #c0392b;
+}
+
+.book-info-page .favorite-toggle-btn.btn-outline-danger {
+    background: white;
+    color: #e74c3c;
+}
+
+.book-info-page .favorite-toggle-btn.btn-outline-danger:hover {
+    background: #e74c3c;
+    color: white;
+    border-color: #e74c3c;
+}
+
 /* Book Description - Centered */
 .book-info-page .book-description {
     margin-bottom: 2rem;
