@@ -37,15 +37,13 @@ type Review = {
     content: string;
     rating: number;
     createdAt: string;
-    book?: {
-        title: string;
-    };
+    book?: string; // This should be the googleId to navigate to BookInfo
 };
 
 type Favorite = {
     _id: string;
     user: string;
-    book: string;
+    book: string; // This is the googleId to navigate to BookInfo
     addedAt: string;
 };
 
@@ -140,6 +138,20 @@ const ProfileHome = () => {
             // Navigate to other user's profile
             navigate(`/Account/Profile/${clickedUserId}`);
         }
+    };
+
+    // Navigation functions for new buttons
+    const navigateToHome = () => {
+        navigate("/home");
+    };
+
+    const navigateToOwnProfile = () => {
+        navigate("/Account/Profile");
+    };
+
+    // Navigation to BookInfo page
+    const navigateToBookInfo = (googleId: string) => {
+        navigate(`/details/${googleId}`);
     };
 
     const fetchProfileData = async (viewingUserId: string) => {
@@ -463,6 +475,7 @@ const ProfileHome = () => {
                         {/* Action Buttons */}
                         {!isEditing && (
                             <div className="action-buttons">
+                                {/* Main Action Button */}
                                 {isOwnProfile ? (
                                     <button
                                         onClick={() => setIsEditing(true)}
@@ -483,6 +496,28 @@ const ProfileHome = () => {
                                                 : "👤+ Follow"
                                         }
                                     </button>
+                                )}
+
+                                {/* Navigation Icon Buttons */}
+                                {currentUser && (
+                                    <div className="nav-icon-buttons">
+                                        <button
+                                            onClick={navigateToHome}
+                                            className="icon-btn home-btn"
+                                            title="Go to Home"
+                                        >
+                                            🏠
+                                        </button>
+                                        {!isOwnProfile && (
+                                            <button
+                                                onClick={navigateToOwnProfile}
+                                                className="icon-btn profile-btn"
+                                                title="Go to My Profile"
+                                            >
+                                                👤
+                                            </button>
+                                        )}
+                                    </div>
                                 )}
                             </div>
                         )}
@@ -586,7 +621,7 @@ const ProfileHome = () => {
                                                 key={favorite._id}
                                                 className="content-detail-item favorite-book-item"
                                                 style={{ cursor: "pointer" }}
-                                                onClick={() => navigate(`/Details/${favorite.book}`)}
+                                                onClick={() => navigateToBookInfo(favorite.book)}
                                             >
                                                 <div className="content-detail-header">
                                                     <div
@@ -647,7 +682,12 @@ const ProfileHome = () => {
                                         // Show full reviews for own profile
                                         reviews.length > 0 ? (
                                             reviews.map((review) => (
-                                                <div key={review._id} className="content-detail-item">
+                                                <div
+                                                    key={review._id}
+                                                    className="content-detail-item"
+                                                    style={{ cursor: "pointer" }}
+                                                    onClick={() => review.book && navigateToBookInfo(review.book)}
+                                                >
                                                     <div className="content-detail-header">
                                                         <div
                                                             style={{
@@ -669,7 +709,7 @@ const ProfileHome = () => {
                                                                     borderRadius: "4px",
                                                                 }}
                                                             >
-                                                                {review.book?.title || "Book"}
+                                                                Book ID: {review.book || "Unknown"}
                                                             </span>
                                                             <span
                                                                 style={{ fontSize: "12px", color: "#6b7280" }}
@@ -694,7 +734,12 @@ const ProfileHome = () => {
                                     ) : // Show limited reviews for other users' profiles
                                         reviews.length > 0 ? (
                                             reviews.map((review) => (
-                                                <div key={review._id} className="content-detail-item">
+                                                <div
+                                                    key={review._id}
+                                                    className="content-detail-item"
+                                                    style={{ cursor: "pointer" }}
+                                                    onClick={() => review.book && navigateToBookInfo(review.book)}
+                                                >
                                                     <div className="content-detail-header">
                                                         <div
                                                             style={{
@@ -716,7 +761,7 @@ const ProfileHome = () => {
                                                                     borderRadius: "4px",
                                                                 }}
                                                             >
-                                                                {review.book?.title || "Book"}
+                                                                Book ID: {review.book || "Unknown"}
                                                             </span>
                                                             <span
                                                                 style={{ fontSize: "12px", color: "#6b7280" }}
@@ -781,47 +826,18 @@ const ProfileHome = () => {
                                                 })()}
                                             </div>
                                         </div>
-
-                                        <div className="info-item">
-                                            <div className="info-label">📝 Bio</div>
-                                            <div className="info-value">
-                                                {profileUser?.bio || "No bio added yet"}
-                                            </div>
-                                        </div>
-
-                                        <div className="info-item">
-                                            <div className="info-label">📅 Member Since</div>
-                                            <div className="info-value">
-                                                {profileUser?.createdAt
-                                                    ? new Date(profileUser.createdAt).toLocaleDateString(
-                                                        "en-US",
-                                                        {
-                                                            year: "numeric",
-                                                            month: "long",
-                                                            day: "numeric",
-                                                        }
-                                                    )
-                                                    : "Not provided"}
-                                            </div>
-                                        </div>
-
-                                        {profileUser?.interests &&
-                                            profileUser.interests.length > 0 && (
-                                                <div className="info-item">
-                                                    <div className="info-label">🎯 Interests</div>
-                                                    <div className="info-value">
-                                                        {profileUser.interests.join(", ")}
-                                                    </div>
-                                                </div>
-                                            )}
                                     </div>
                                 </div>
                             </div>
                         )}
                     </div>
+                    {/* End main-content */}
                 </div>
+                {/* End content-layout */}
             </div>
+            {/* End profile-wrapper */}
         </div>
+        // End profile-container
     );
 };
 
