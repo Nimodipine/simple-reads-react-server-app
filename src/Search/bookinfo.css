@@ -402,7 +402,7 @@
     margin-bottom: 1rem;
     padding-bottom: 0.5rem;
     border-bottom: 2px solid #ecf0f1;
-    text-align: center;
+    text-align: left;
     display: block;
 }
 
@@ -410,7 +410,7 @@
     display: flex;
     flex-wrap: wrap;
     gap: 0.75rem;
-    justify-content: center;
+    justify-content: left;
     align-items: flex-start;
 }
 
@@ -454,10 +454,13 @@
     transition: all 0.3s ease;
     font-size: 1rem;
     letter-spacing: 0.3px;
-    border: 2px solid #e74c3c;
     min-width: 200px;
+    border-width: 2px;
+    /* keep thickness but let variant control color */
+    border-style: solid;
 }
 
+/* Hover effect for both variants */
 .book-info-page .favorite-toggle-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(231, 76, 60, 0.3);
@@ -467,6 +470,7 @@
     transform: translateY(-1px);
 }
 
+/* Filled danger variant */
 .book-info-page .favorite-toggle-btn.btn-danger {
     background: linear-gradient(135deg, #e74c3c, #c0392b);
     border-color: #e74c3c;
@@ -478,9 +482,12 @@
     border-color: #c0392b;
 }
 
+/* Outline danger variant */
 .book-info-page .favorite-toggle-btn.btn-outline-danger {
     background: white;
     color: #e74c3c;
+    border-color: #e74c3c;
+    /* set here instead of base rule */
 }
 
 .book-info-page .favorite-toggle-btn.btn-outline-danger:hover {
@@ -499,7 +506,7 @@
 
 .book-info-page .book-description .section-title {
     margin-bottom: 1.5rem;
-    text-align: center;
+    text-align: left;
 }
 
 .book-info-page .description-content {

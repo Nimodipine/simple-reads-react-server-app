@@ -773,6 +773,7 @@ const BookInfo: React.FC = () => {
                                         <Button
                                             type="button"
                                             variant="outline-secondary"
+                                            style={{ marginTop: "16px" }}
                                             onClick={() => {
                                                 setReviewTitle("");
                                                 setReviewContent("");
