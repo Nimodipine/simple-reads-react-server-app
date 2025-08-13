@@ -207,11 +207,7 @@ const BookInfo: React.FC = () => {
 
         try {
             const method = isFavorited ? "DELETE" : "POST";
-            const url = isFavorited
-                ? `${API_BASE_URL}/api/favorites/${googleId}`
-                : `${API_BASE_URL}/api/favorites`;
-
-            const body = isFavorited ? undefined : JSON.stringify({ book: googleId });
+            const url = `${API_BASE_URL}/api/favorites/${googleId}`;
 
             const response = await fetch(url, {
                 method,
@@ -219,7 +215,6 @@ const BookInfo: React.FC = () => {
                     "Content-Type": "application/json",
                 },
                 credentials: "include",
-                ...(body && { body }),
             });
 
             if (response.ok) {
