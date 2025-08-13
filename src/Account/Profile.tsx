@@ -342,7 +342,17 @@ const ProfileHome = () => {
             <div className="profile-container">
                 <div className="auth-message">
                     <h2>Please sign in to view your profile</h2>
-                    <a href="/Account/Signin">Sign In</a>
+                    <button
+                        onClick={() => navigate("/Account/Signin")}
+                        className="btn-primary"
+                        style={{
+                            marginTop: "1rem",
+                            padding: "0.75rem 1.5rem",
+                            fontSize: "1rem"
+                        }}
+                    >
+                        Sign In
+                    </button>
                 </div>
             </div>
         );
