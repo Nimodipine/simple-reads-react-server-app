@@ -7,8 +7,9 @@ import './home.css';
 const API_BASE_URL = import.meta.env.VITE_REMOTE_SERVER || 'http://localhost:4000';
 
 export interface HomeProps {
-    isLoggedIn: boolean;
+    isLoggedIn?: boolean;
     user?: {
+        _id?: string;
         name: string;
         handle: string;
         avatarUrl?: string;
@@ -50,7 +51,7 @@ interface Review {
     };
 }
 
-export default function Home({ isLoggedIn, user, onLogOut }: HomeProps) {
+export default function Home({ isLoggedIn = false, user, onLogOut }: HomeProps) {
     const [searchQuery, setSearchQuery] = useState("");
     const [trendingBooks, setTrendingBooks] = useState<Book[]>([]);
     const [topReviews, setTopReviews] = useState<Review[]>([]);
@@ -59,7 +60,7 @@ export default function Home({ isLoggedIn, user, onLogOut }: HomeProps) {
 
     useEffect(() => {
         fetchHomeData();
-    }, []);
+    }, [isLoggedIn, user]);
 
     const fetchHomeData = async () => {
         try {
@@ -113,32 +114,39 @@ export default function Home({ isLoggedIn, user, onLogOut }: HomeProps) {
 
     const fetchTopReviews = async (): Promise<Review[]> => {
         try {
-            // Use admin reviews endpoint for both logged-in and non-logged-in users
-            const response = await fetch(`${API_BASE_URL}/api/admin/reviews`, {
-                credentials: 'include'
-            });
+            let response;
+
+            if (isLoggedIn && user?._id) {
+                // Fetch reviews from users that the current user is following
+                response = await fetch(`${API_BASE_URL}/api/profile/${user._id}/following/reviews`, {
+                    credentials: 'include'
+                });
+            } else {
+                // Fetch random reviews for non-logged-in users or users without _id
+                response = await fetch(`${API_BASE_URL}/api/reviews/random`, {
+                    credentials: 'include'
+                });
+            }
 
             if (response.ok) {
                 const data = await response.json();
-                const allReviews = Array.isArray(data) ? data : data.reviews || [];
+                const reviews = Array.isArray(data) ? data : data.reviews || [];
 
-                // Sort by creation date (most recent first)
-                const sortedReviews = allReviews
-                    .sort((a: { createdAt: string | number | Date; }, b: { createdAt: string | number | Date; }) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+                // The endpoints should already return 3-5 reviews as specified
+                // but we can limit them here as a safety measure
+                return reviews.slice(0, isLoggedIn ? 5 : 3);
+            }
 
-                if (isLoggedIn) {
-                    // If logged in, return 4 most recent reviews
-                    return sortedReviews.slice(0, 4);
-                } else {
-                    // If not logged in, return 3 reviews (could be recent or random selection)
-                    if (sortedReviews.length <= 3) {
-                        return sortedReviews;
-                    }
+            // Fallback: if the new endpoints fail, try the random reviews endpoint
+            if (isLoggedIn) {
+                const fallbackResponse = await fetch(`${API_BASE_URL}/api/reviews/random`, {
+                    credentials: 'include'
+                });
 
-                    // Get 3 random reviews from the most recent 10 to add some variety
-                    const recentTen = sortedReviews.slice(0, Math.min(10, sortedReviews.length));
-                    const shuffled = recentTen.sort(() => 0.5 - Math.random());
-                    return shuffled.slice(0, 3);
+                if (fallbackResponse.ok) {
+                    const fallbackData = await fallbackResponse.json();
+                    const fallbackReviews = Array.isArray(fallbackData) ? fallbackData : fallbackData.reviews || [];
+                    return fallbackReviews.slice(0, 3);
                 }
             }
 
