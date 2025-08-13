@@ -1,0 +1,859 @@
+/* src/Search/bookinfo.css - Enhanced Styles Matching Detail.css Design */
+
+/* Main Page Layout - Scoped to bookinfo only */
+.book-info-page {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding-bottom: 2rem;
+}
+
+/* Navigation - Scoped to bookinfo only */
+.book-info-page .navigation-section {
+    margin-bottom: 2rem;
+}
+
+.book-info-page .back-button {
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    padding: 0.5rem 1.5rem;
+    border: 2px solid #667eea;
+    background: rgba(255, 255, 255, 0.9);
+    color: #667eea;
+}
+
+.book-info-page .back-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    background: white;
+    border-color: #764ba2;
+    color: #764ba2;
+}
+
+/* Book Cover Card - Scoped to bookinfo only */
+.book-info-page .book-cover-card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    transition: transform 0.3s ease;
+    background: white;
+}
+
+.book-info-page .book-cover-card:hover {
+    transform: translateY(-2px);
+}
+
+.book-info-page .book-cover-section {
+    padding: 2rem;
+    background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+    text-align: center;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.book-info-page .book-cover-image {
+    width: auto;
+    max-width: 100%;
+    max-height: 350px;
+    border-radius: 10px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    transition: transform 0.3s ease;
+    display: block;
+    margin: 0 auto;
+}
+
+.book-info-page .book-cover-image:hover {
+    transform: scale(1.02);
+}
+
+.book-info-page .book-cover-placeholder {
+    width: 200px;
+    height: 300px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 4rem;
+    color: white;
+    border-radius: 10px;
+    margin: 0 auto;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Action Buttons - Scoped to bookinfo only */
+.book-info-page .book-actions-section {
+    padding: 1.5rem;
+}
+
+.book-info-page .action-button {
+    width: 100%;
+    margin-bottom: 0.75rem;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    padding: 0.75rem 1rem;
+}
+
+.book-info-page .action-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.book-info-page .favorite-button {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    border: none;
+}
+
+.book-info-page .favorite-button:hover {
+    background: linear-gradient(135deg, #c0392b, #a93226);
+}
+
+.book-info-page .preview-button {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border: none;
+}
+
+.book-info-page .preview-button:hover {
+    background: linear-gradient(135deg, #764ba2, #8e44ad);
+}
+
+.book-info-page .info-button {
+    border: 2px solid #667eea;
+    color: #667eea;
+    background: white;
+}
+
+.book-info-page .info-button:hover {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+}
+
+.book-info-page .review-button {
+    background: linear-gradient(135deg, #27ae60, #2ecc71);
+    border: none;
+}
+
+.book-info-page .review-button:hover {
+    background: linear-gradient(135deg, #2ecc71, #58d68d);
+}
+
+.book-info-page .edit-review-button {
+    border: 2px solid #27ae60;
+    color: #27ae60;
+    background: white;
+}
+
+.book-info-page .edit-review-button:hover {
+    background: #27ae60;
+    color: white;
+    border-color: #27ae60;
+}
+
+/* Stats Card - Scoped to bookinfo only */
+.book-info-page .stats-card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    background: white;
+}
+
+.book-info-page .stats-title {
+    color: #2c3e50;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #ecf0f1;
+}
+
+.book-info-page .stat-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    color: #555;
+}
+
+.book-info-page .stat-item:last-child {
+    margin-bottom: 0;
+}
+
+.book-info-page .stat-icon {
+    color: #667eea;
+    margin-right: 0.75rem;
+    font-size: 1.1rem;
+}
+
+/* Main Book Info Card - Scoped to bookinfo only */
+.book-info-page .book-info-card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    background: white;
+    margin: 1rem;
+}
+
+.book-info-page .book-header {
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.book-info-page .book-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #2c3e50;
+    line-height: 1.2;
+    margin-bottom: 1rem;
+    margin-top: 2rem;
+    text-align: center;
+}
+
+.book-info-page .book-authors {
+    font-size: 1.2rem;
+    color: #666;
+    text-align: center;
+}
+
+.book-info-page .authors-label {
+    color: #888;
+}
+
+.book-info-page .author-link {
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+.book-info-page .author-link:hover {
+    color: #764ba2;
+    text-decoration: underline;
+}
+
+/* Ratings Section - Scoped to bookinfo only */
+.book-info-page .ratings-section {
+    background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+    padding: 1.5rem;
+    border-radius: 10px;
+    border-left: 4px solid #667eea;
+    margin-bottom: 2rem;
+}
+
+.book-info-page .rating-item {
+    margin-bottom: 1rem;
+}
+
+.book-info-page .rating-item:last-child {
+    margin-bottom: 0;
+}
+
+.book-info-page .rating-label {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+}
+
+.book-info-page .rating-display {
+    display: flex;
+    align-items: center;
+}
+
+.book-info-page .stars {
+    display: flex;
+    margin-right: 0.75rem;
+}
+
+.book-info-page .star-filled {
+    color: #ffc107;
+    font-size: 1.2rem;
+    margin-right: 2px;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+}
+
+.book-info-page .star-half {
+    color: #ffc107;
+    font-size: 1.2rem;
+    margin-right: 2px;
+    position: relative;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+}
+
+.book-info-page .star-empty {
+    color: #e9ecef;
+    font-size: 1.2rem;
+    margin-right: 2px;
+}
+
+.book-info-page .star-interactive {
+    color: #e9ecef;
+    font-size: 1.2rem;
+    margin-right: 2px;
+    transition: color 0.2s ease;
+}
+
+.book-info-page .star-interactive-active {
+    color: #ffc107;
+    font-size: 1.2rem;
+    margin-right: 2px;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+}
+
+.book-info-page .star-interactive:hover {
+    color: #ffdb4d;
+}
+
+.book-info-page .rating-text {
+    color: #666;
+    font-size: 0.95rem;
+}
+
+.book-info-page .rating-value {
+    color: #667eea;
+    font-weight: 500;
+    margin-left: 0.5rem;
+}
+
+/* Book Metadata - Scoped to bookinfo only */
+.book-info-page .book-metadata {
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.book-info-page .metadata-item {
+    display: inline-block;
+    margin: 0.5rem 1rem;
+    color: #555;
+    text-align: center;
+}
+
+.book-info-page .metadata-icon {
+    color: #667eea;
+    margin-right: 0.5rem;
+    font-size: 1.1rem;
+}
+
+.book-info-page .metadata-label {
+    font-weight: 600;
+    margin-right: 0.5rem;
+    color: #2c3e50;
+}
+
+.book-info-page .metadata-value {
+    color: #666;
+}
+
+/* Categories Section - Scoped to bookinfo only */
+.book-info-page .categories-section {
+    margin-bottom: 2rem;
+    margin-left: 2rem;
+    text-align: left;
+}
+
+.book-info-page .section-title {
+    color: #2c3e50;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #ecf0f1;
+    text-align: left;
+    display: block;
+    margin-left: 4rem;
+}
+
+.book-info-page .categories-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    justify-content: flex-start;
+    align-items: flex-start;
+}
+
+
+
+.book-info-page .category-tag {
+    text-decoration: none;
+    display: inline-block;
+    margin-bottom: 0.5rem;
+}
+
+.book-info-page .category-badge {
+    background: #f8f9fa !important;
+    color: #2c3e50 !important;
+    border: 2px solid #667eea !important;
+    padding: 0.6rem 1rem;
+    border-radius: 20px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    display: inline-block;
+    white-space: nowrap;
+    line-height: 1.2;
+    min-height: fit-content;
+    margin-left: 3rem;
+}
+
+.book-info-page .category-badge:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    background: #667eea !important;
+    color: white !important;
+}
+
+/* Book Description - Scoped to bookinfo only */
+.book-info-page .book-description {
+    margin-bottom: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid #ecf0f1;
+    margin-left: 1rem;
+}
+
+.book-info-page .book-description .section-title {
+    margin-bottom: 1.5rem;
+}
+
+.book-info-page .description-content {
+    color: #555;
+    line-height: 1.6;
+    font-size: 1.05rem;
+    margin-bottom: 2rem;
+    margin-left: 4rem;
+}
+
+.book-info-page .description-content p {
+    margin-bottom: 1rem;
+}
+
+/* Reviews Section - Scoped to bookinfo only */
+.book-info-page .reviews-card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    background: white;
+    margin: 1rem;
+    margin-top: 2rem;
+}
+
+.book-info-page .reviews-header {
+    background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+    border-bottom: 1px solid #e9ecef;
+    border-radius: 15px 15px 0 0;
+    padding: 1.5rem 2rem;
+}
+
+.book-info-page .reviews-header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-left: 2rem;
+}
+
+.book-info-page .reviews-title {
+    color: #2c3e50;
+    font-weight: 700;
+    font-size: 1.5rem;
+    margin: 0;
+}
+
+.book-info-page .write-review-btn {
+    background: white;
+    border: 2px solid #27ae60;
+    color: #27ae60;
+    border-radius: 6px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.book-info-page .write-review-btn:hover {
+    background: #27ae60;
+    color: white;
+    transform: translateY(-1px);
+}
+
+.book-info-page .reviews-body {
+    padding: 2rem;
+    padding-left: 4rem;
+}
+
+/* No Reviews State - Scoped to bookinfo only */
+.book-info-page .no-reviews {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: #666;
+}
+
+.book-info-page .no-reviews-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+.book-info-page .no-reviews h6 {
+    color: #2c3e50;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.book-info-page .no-reviews p {
+    margin-bottom: 1.5rem;
+}
+
+/* Reviews List - Scoped to bookinfo only */
+.book-info-page .reviews-list {
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.book-info-page .review-item {
+    border-bottom: 1px solid #ecf0f1;
+    padding: 1.5rem 0;
+}
+
+.book-info-page .review-item:last-child {
+    border-bottom: none;
+}
+
+.book-info-page .review-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.book-info-page .reviewer-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.book-info-page .reviewer-name {
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1.1rem;
+    transition: color 0.3s ease;
+}
+
+.book-info-page .reviewer-name:hover {
+    color: #764ba2;
+    text-decoration: underline;
+}
+
+.book-info-page .review-date {
+    color: #888;
+    font-size: 0.9rem;
+    margin-top: 0.25rem;
+}
+
+.book-info-page .review-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.book-info-page .user-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.book-info-page .user-actions .btn {
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+.book-info-page .user-actions .btn:hover {
+    transform: translateY(-1px);
+}
+
+.book-info-page .review-content {
+    margin-left: 0;
+}
+
+.book-info-page .review-title {
+    color: #2c3e50;
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-bottom: 0.75rem;
+}
+
+.book-info-page .review-text {
+    color: #555;
+    line-height: 1.6;
+    margin: 0;
+}
+
+.no-reviews-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+.no-reviews h6 {
+    color: #2c3e50;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.no-reviews p {
+    margin-bottom: 1.5rem;
+}
+
+/* Reviews List */
+.reviews-list {
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.review-item {
+    border-bottom: 1px solid #ecf0f1;
+    padding: 1.5rem 0;
+}
+
+.review-item:last-child {
+    border-bottom: none;
+}
+
+.review-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.reviewer-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.reviewer-name {
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1.1rem;
+    transition: color 0.3s ease;
+}
+
+.reviewer-name:hover {
+    color: #764ba2;
+    text-decoration: underline;
+}
+
+.review-date {
+    color: #888;
+    font-size: 0.9rem;
+    margin-top: 0.25rem;
+}
+
+.review-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.user-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.user-actions .btn {
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+.user-actions .btn:hover {
+    transform: translateY(-1px);
+}
+
+.review-content {
+    margin-left: 0;
+}
+
+.review-title {
+    color: #2c3e50;
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-bottom: 0.75rem;
+}
+
+.review-text {
+    color: #555;
+    line-height: 1.6;
+    margin: 0;
+}
+
+/* Review Modal - Scoped to bookinfo only */
+.book-info-page .review-modal .modal-content {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.book-info-page .review-modal-header {
+    background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+    border-bottom: 1px solid #e9ecef;
+    border-radius: 15px 15px 0 0;
+}
+
+.book-info-page .review-modal-header .modal-title {
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+.book-info-page .review-modal-body {
+    padding: 2rem;
+}
+
+.book-info-page .review-book-info {
+    display: flex;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 10px;
+}
+
+.book-info-page .review-book-cover {
+    width: 60px;
+    height: auto;
+    border-radius: 6px;
+    margin-right: 1rem;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.book-info-page .review-book-info h6 {
+    margin: 0;
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+.book-info-page .review-book-info p {
+    margin: 0.25rem 0 0 0;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.book-info-page .review-form-label {
+    color: #2c3e50;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+}
+
+.book-info-page .review-form-input {
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.book-info-page .review-form-input:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+.book-info-page .rating-input {
+    margin-bottom: 1rem;
+}
+
+.book-info-page .review-modal-footer {
+    border-top: 1px solid #e9ecef;
+    padding: 1.5rem 2rem;
+}
+
+.book-info-page .review-modal-footer .btn {
+    border-radius: 8px;
+    font-weight: 500;
+    padding: 0.75rem 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.book-info-page .review-modal-footer .btn:hover {
+    transform: translateY(-1px);
+}
+
+/* Loading States - Scoped to bookinfo only */
+.book-info-page .loading-container {
+    padding: 4rem 2rem;
+}
+
+.book-info-page .loading-spinner {
+    color: #667eea;
+    width: 3rem;
+    height: 3rem;
+}
+
+.book-info-page .loading-text {
+    color: #666;
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+/* Error Alert - Scoped to bookinfo only */
+.book-info-page .error-alert {
+    border: none;
+    border-radius: 15px;
+    background: linear-gradient(45deg, #fff5f5, #fed7d7);
+    border-left: 4px solid #e53e3e;
+}
+
+.book-info-page .error-alert h4 {
+    color: #c53030;
+    font-weight: 600;
+}
+
+.book-info-page .error-alert p {
+    color: #744210;
+    margin-bottom: 1rem;
+}
+
+.book-info-page .error-alert .btn {
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.book-info-page .error-alert .btn:hover {
+    transform: translateY(-1px);
+}
+
+/* Responsive Design - Scoped to bookinfo only */
+@media (max-width: 768px) {
+    .book-info-page .book-title {
+        font-size: 2rem;
+    }
+
+    .book-info-page .book-authors {
+        font-size: 1.1rem;
+    }
+
+    .book-info-page .action-button {
+        padding: 0.6rem;
+        font-size: 0.9rem;
+    }
+
+    .book-info-page .review-modal-body {
+        padding: 1.5rem;
+    }
+
+    .book-info-page .book-cover-section {
+        padding: 1.5rem;
+    }
+
+    .book-info-page .book-cover-placeholder {
+        width: 150px;
+        height: 225px;
+        font-size: 3rem;
+    }
+
+    .book-info-page .reviews-header-content {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+
+    .book-info-page .review-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .book-info-page .metadata-item {
+        display: block;
+        margin: 0.5rem 0;
+        text-align: center;
+    }
+}

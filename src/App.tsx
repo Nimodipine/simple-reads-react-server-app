@@ -3,9 +3,10 @@ import Home from "./Home/Home";
 import Signin from "./Account/Signin";
 import Signup from "./Account/Signup";
 import Profile from "./Account/Profile";
-import { Provider } from "react-redux";
-import { store } from "./store"
 import Search from "./Search/search";
+import BookInfo from "./Search/bookinfo";
+import { Provider } from "react-redux";
+import { store } from "./store";
 
 export default function App() {
   return (
@@ -27,6 +28,10 @@ export default function App() {
           <Route path="/Account/Profile" element={<Profile />} />
           <Route path="/Account/Profile/:userId" element={<Profile />} />
           <Route path="/search" element={<Search />} />
+          {/* Add the book details route */}
+          <Route path="/details/:googleId" element={<BookInfo />} />
+          {/* Optional: You can also add the alternative route pattern */}
+          <Route path="/book/:googleId" element={<BookInfo />} />
         </Routes>
       </Provider>
     </HashRouter>

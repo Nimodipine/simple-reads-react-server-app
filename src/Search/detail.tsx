@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Container, Row, Col, Card, Button, Badge, Alert, Spinner } from 'react-bootstrap';
-import { FaArrowLeft, FaStar, FaBookOpen, FaGlobe, FaCalendarAlt, FaUser, FaHeart } from 'react-icons/fa';
+import { FaArrowLeft, FaBookOpen, FaGlobe, FaCalendarAlt, FaUser, FaHeart } from 'react-icons/fa';
 import './detail.css';
 
 interface Book {
@@ -93,7 +93,6 @@ const BookDetails: React.FC = () => {
     const fetchBookReviews = async () => {
         try {
             setReviewsLoading(true);
-            // Assuming you have a reviews API endpoint
             const response = await fetch(`/api/reviews/book/${googleId}`);
             const data: ReviewsResponse = await response.json();
 
@@ -118,7 +117,6 @@ const BookDetails: React.FC = () => {
 
             if (response.ok) {
                 setIsFavorited(!isFavorited);
-                // Update favorite count in book state
                 if (book) {
                     setBook({
                         ...book,
@@ -131,35 +129,6 @@ const BookDetails: React.FC = () => {
         } catch (err) {
             console.error('Error toggling favorite:', err);
         }
-    };
-
-    const renderStars = (rating: number, ratingsCount?: number, showCount = true) => {
-        if (!rating) return null;
-
-        const stars = [];
-        const fullStars = Math.floor(rating);
-        const hasHalfStar = rating % 1 >= 0.5;
-
-        for (let i = 0; i < 5; i++) {
-            if (i < fullStars) {
-                stars.push(<FaStar key={i} className="star-filled" />);
-            } else if (i === fullStars && hasHalfStar) {
-                stars.push(<FaStar key={i} className="star-half" />);
-            } else {
-                stars.push(<FaStar key={i} className="star-empty" />);
-            }
-        }
-
-        return (
-            <div className="rating-display">
-                <div className="stars">{stars}</div>
-                {showCount && (
-                    <span className="rating-text">
-                        {rating.toFixed(1)} {ratingsCount && `(${ratingsCount} reviews)`}
-                    </span>
-                )}
-            </div>
-        );
     };
 
     const formatDate = (dateString: string) => {
@@ -205,7 +174,6 @@ const BookDetails: React.FC = () => {
     return (
         <div className="book-details-page">
             <Container className="mt-4">
-                {/* Navigation */}
                 <Button
                     variant="outline-primary"
                     onClick={() => navigate(-1)}
@@ -216,7 +184,6 @@ const BookDetails: React.FC = () => {
                 </Button>
 
                 <Row>
-                    {/* Book Information */}
                     <Col lg={4} className="mb-4">
                         <Card className="book-details-card">
                             <div className="book-cover-section">
@@ -272,7 +239,6 @@ const BookDetails: React.FC = () => {
                         </Card>
                     </Col>
 
-                    {/* Book Details */}
                     <Col lg={8}>
                         <Card className="book-info-card mb-4">
                             <Card.Body>
@@ -290,24 +256,8 @@ const BookDetails: React.FC = () => {
                                     ))}
                                 </div>
 
-                                {/* Ratings */}
-                                <div className="ratings-section mb-4">
-                                    {book.googleRating && (
-                                        <div className="rating-item">
-                                            <strong>Google Books Rating:</strong>
-                                            {renderStars(book.googleRating, book.googleRatingsCount)}
-                                        </div>
-                                    )}
+                                {/* Ratings section removed */}
 
-                                    {book.internalRating && book.internalRatingsCount && book.internalRatingsCount > 0 && (
-                                        <div className="rating-item">
-                                            <strong>Community Rating:</strong>
-                                            {renderStars(book.internalRating, book.internalRatingsCount)}
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Book Metadata */}
                                 <Row className="book-metadata mb-4">
                                     {book.publishedDate && (
                                         <Col md={6} className="metadata-item">
@@ -347,7 +297,6 @@ const BookDetails: React.FC = () => {
                                     </Col>
                                 </Row>
 
-                                {/* Categories */}
                                 {book.categories.length > 0 && (
                                     <div className="categories-section mb-4">
                                         <strong>Categories:</strong>
@@ -366,7 +315,6 @@ const BookDetails: React.FC = () => {
                                     </div>
                                 )}
 
-                                {/* Description */}
                                 <div className="book-description">
                                     <h5>About this book</h5>
                                     <div dangerouslySetInnerHTML={{ __html: book.description }} />
@@ -374,7 +322,6 @@ const BookDetails: React.FC = () => {
                             </Card.Body>
                         </Card>
 
-                        {/* Reviews Section */}
                         <Card className="reviews-card">
                             <Card.Header>
                                 <h5 className="mb-0">
@@ -409,7 +356,6 @@ const BookDetails: React.FC = () => {
                                                             {formatDate(review.createdAt)}
                                                         </span>
                                                     </div>
-                                                    {renderStars(review.rating, undefined, false)}
                                                 </div>
                                                 <div className="review-text">
                                                     {review.reviewText}
