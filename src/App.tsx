@@ -5,6 +5,7 @@ import Signup from "./Account/Signup";
 import Profile from "./Account/Profile";
 import { Provider } from "react-redux";
 import { store } from "./store"
+import Search from "./Search/search";
 
 export default function App() {
   return (
@@ -25,6 +26,7 @@ export default function App() {
           <Route path="/Account/Signup" element={<Signup />} />
           <Route path="/Account/Profile" element={<Profile />} />
           <Route path="/Account/Profile/:userId" element={<Profile />} />
+          <Route path="/search" element={<Search />} />
         </Routes>
       </Provider>
     </HashRouter>

@@ -42,6 +42,13 @@ type Review = {
     };
 };
 
+type Favorite = {
+    _id: string;
+    user: string;
+    book: string;
+    addedAt: string;
+};
+
 const ProfileHome = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
@@ -59,6 +66,7 @@ const ProfileHome = () => {
     const [followers, setFollowers] = useState<FollowDoc[]>([]);
     const [following, setFollowing] = useState<FollowDoc[]>([]);
     const [reviews, setReviews] = useState<Review[]>([]);
+    const [favorites, setFavorites] = useState<Favorite[]>([]);
     const [isFollowing, setIsFollowing] = useState(false);
     const [followLoading, setFollowLoading] = useState(false);
 
@@ -139,7 +147,7 @@ const ProfileHome = () => {
             dispatch(setLoading(true));
 
             // Use the correct endpoints that exist in routes.js
-            const [followersCountRes, followingCountRes, followersRes, followingRes, reviewsRes] =
+            const [followersCountRes, followingCountRes, followersRes, followingRes, reviewsRes, favoritesRes] =
                 await Promise.all([
                     fetch(`${API_BASE_URL}/api/profile/${viewingUserId}/followers/count`, {
                         credentials: "include",
@@ -154,6 +162,9 @@ const ProfileHome = () => {
                         credentials: "include",
                     }),
                     fetch(`${API_BASE_URL}/api/profile/${viewingUserId}/reviews`, {
+                        credentials: "include",
+                    }),
+                    fetch(`${API_BASE_URL}/api/favorites/user/${viewingUserId}`, {
                         credentials: "include",
                     }),
                 ]);
@@ -186,6 +197,11 @@ const ProfileHome = () => {
             if (reviewsRes.ok) {
                 const reviewsData = await reviewsRes.json();
                 setReviews(reviewsData);
+            }
+
+            if (favoritesRes.ok) {
+                const favoritesData = await favoritesRes.json();
+                setFavorites(favoritesData);
             }
         } catch (error) {
             console.error("Error fetching profile data:", error);
@@ -435,6 +451,10 @@ const ProfileHome = () => {
                                             <div className="stat-number">{reviews.length}</div>
                                             <div className="stat-label">Reviews</div>
                                         </div>
+                                        <div className="stat-item">
+                                            <div className="stat-number">{favorites.length}</div>
+                                            <div className="stat-label">Favorites</div>
+                                        </div>
                                     </div>
                                 </div>
                             )}
@@ -472,7 +492,7 @@ const ProfileHome = () => {
                 {/* Navigation Tabs */}
                 <div className="nav-tabs-container">
                     <div className="nav-tabs">
-                        {["followers", "following", "reviews", "info"].map((tab) => (
+                        {["followers", "following", "favorites", "reviews", "info"].map((tab) => (
                             <button
                                 key={tab}
                                 onClick={() => setActiveTab(tab)}
@@ -551,6 +571,68 @@ const ProfileHome = () => {
                                         })
                                     ) : (
                                         <p>Not following anyone yet</p>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === "favorites" && (
+                            <div className="card">
+                                <h3 className="card-title">❤️ Favorite Books</h3>
+                                <div className="content-items">
+                                    {favorites.length > 0 ? (
+                                        favorites.map((favorite) => (
+                                            <div
+                                                key={favorite._id}
+                                                className="content-detail-item favorite-book-item"
+                                                style={{ cursor: "pointer" }}
+                                                onClick={() => navigate(`/Details/${favorite.book}`)}
+                                            >
+                                                <div className="content-detail-header">
+                                                    <div
+                                                        style={{
+                                                            display: "flex",
+                                                            alignItems: "center",
+                                                            gap: "12px",
+                                                            marginBottom: "12px",
+                                                        }}
+                                                    >
+                                                        <span
+                                                            style={{
+                                                                fontSize: "16px",
+                                                                color: "#dc2626",
+                                                            }}
+                                                        >
+                                                            ❤️
+                                                        </span>
+                                                        <span
+                                                            style={{
+                                                                fontSize: "12px",
+                                                                color: "#6b7280",
+                                                                background: "#fef3c7",
+                                                                padding: "2px 8px",
+                                                                borderRadius: "4px",
+                                                            }}
+                                                        >
+                                                            Book ID: {favorite.book}
+                                                        </span>
+                                                        <span
+                                                            style={{ fontSize: "12px", color: "#6b7280" }}
+                                                        >
+                                                            Added: {new Date(favorite.addedAt).toLocaleDateString()}
+                                                        </span>
+                                                    </div>
+                                                    <h4 className="content-detail-title">
+                                                        Favorite Book
+                                                    </h4>
+                                                </div>
+                                                <p className="content-detail-snippet">
+                                                    Click to view book details
+                                                </p>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <p>No favorite books yet</p>
                                     )}
                                 </div>
                             </div>
