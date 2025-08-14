@@ -1,6 +1,6 @@
 import { Button, Form } from "react-bootstrap";
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { setCurrentUser, setLoading, setError, clearError } from "./reducer";
 import "./auth.css";
@@ -14,7 +14,12 @@ export default function Signin() {
 
     const dispatch = useDispatch<AppDispatch>();
     const navigate = useNavigate();
+    const location = useLocation();
     const { error } = useSelector((state: RootState) => state.account);
+
+    // Get the return URL from navigation state
+    const returnTo = location.state?.returnTo;
+    const bookTitle = location.state?.bookTitle;
 
     const validateForm = (): boolean => {
         const newErrors: { [key: string]: string } = {};
@@ -64,8 +69,13 @@ export default function Signin() {
                 // Update Redux store with user data
                 dispatch(setCurrentUser(userData));
 
-                // Navigate to home page
-                navigate('/home');
+                // Navigate back to the book page if returnTo exists, otherwise go to home
+                if (returnTo) {
+                    console.log('Redirecting back to:', returnTo);
+                    navigate(returnTo);
+                } else {
+                    navigate('/home');
+                }
             } else {
                 // Check if response has JSON content
                 const contentType = response.headers.get('content-type');
@@ -112,7 +122,12 @@ export default function Signin() {
             <div id="wd-signin-screen" className="auth-form">
                 <div className="auth-header">
                     <h1 className="auth-title">Welcome back</h1>
-                    <p className="auth-subtitle">Sign in to your account</p>
+                    <p className="auth-subtitle">
+                        {returnTo && bookTitle
+                            ? `Sign in to view "${bookTitle}" and access all features`
+                            : "Sign in to your account"
+                        }
+                    </p>
                 </div>
 
                 {(errors.general || error) && (
@@ -178,8 +193,11 @@ export default function Signin() {
                 </div>
 
                 <div className="auth-links">
-                    <Link to="/home" className="auth-back-link">
-                        ← Back to home
+                    <Link
+                        to={returnTo || "/home"}
+                        className="auth-back-link"
+                    >
+                        ← Back to {returnTo ? "book" : "home"}
                     </Link>
                 </div>
             </div>

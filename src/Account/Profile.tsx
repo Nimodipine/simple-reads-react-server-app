@@ -337,7 +337,7 @@ const ProfileHome = () => {
         );
     }
 
-    if (!currentUser) {
+    if (!currentUser && !userId) {
         return (
             <div className="profile-container">
                 <div className="auth-message">

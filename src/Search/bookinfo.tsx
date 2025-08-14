@@ -9,6 +9,7 @@ import {
     FaTrash,
     FaHeart,
     FaRegHeart,
+    FaLock,
 } from "react-icons/fa";
 import "./detail.css";
 import "./bookinfo.css";
@@ -28,17 +29,12 @@ interface Book {
     pageCount: number;
     language: string;
     publisher?: string;
-
-    // add the fields you actually render:
-    image?: string; // used in JSX
-    thumbnail?: string; // keep if backend sometimes sends this
-    isbn10?: string; // used in JSX
-    isbn13?: string; // used in JSX
-
+    image?: string;
+    thumbnail?: string;
+    isbn10?: string;
+    isbn13?: string;
     googleRating?: number;
     googleRatingsCount?: number;
-    internalRating?: number;
-    internalRatingsCount?: number;
     viewCount?: number;
     favoriteCount?: number;
     previewLink?: string;
@@ -89,6 +85,10 @@ const BookInfo: React.FC = () => {
     const [isFavorited, setIsFavorited] = useState(false);
     const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
 
+    // Authentication states
+    const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+    const [authLoading, setAuthLoading] = useState(true);
+
     // Review form state
     const [reviewTitle, setReviewTitle] = useState("");
     const [reviewContent, setReviewContent] = useState("");
@@ -98,32 +98,12 @@ const BookInfo: React.FC = () => {
     const [reviewSuccess, setReviewSuccess] = useState<string | null>(null);
     const [isEditingReview, setIsEditingReview] = useState(false);
 
-    // --------- Navigation Helper ----------
-    const navigateToUserProfile = (userId: string) => {
-        if (userId === currentUser?._id) {
-            // Navigate to own profile
-            navigate("/Account/Profile");
-        } else {
-            // Navigate to other user's profile
-            navigate(`/Account/Profile/${userId}`);
-        }
-    };
-
-    const handleBackNavigation = () => {
-        // Check if there's a previous page in history
-        if (window.history.length > 1) {
-            // Use browser back to preserve search state
-            navigate(-1);
-        } else {
-            // Fallback to search page if no history
-            navigate('/search');
-        }
-    };
-
-    // --------- Fetchers ----------
-    const fetchCurrentUser = async () => {
+    // --------- Authentication Check ----------
+    const checkAuthentication = async () => {
         try {
-            console.log("Fetching current user profile...");
+            setAuthLoading(true);
+            console.log("Checking authentication status...");
+
             const res = await fetch(`${API_BASE_URL}/api/profile`, {
                 credentials: "include",
                 headers: {
@@ -131,50 +111,66 @@ const BookInfo: React.FC = () => {
                 },
             });
 
-            console.log("Profile fetch response status:", res.status);
+            console.log("Auth check response status:", res.status);
 
             if (res.status === 401) {
-                console.log("User not authenticated - using fake user for testing");
-                // Set fake user for testing instead of null
-                setCurrentUser({
-                    _id: "user001",
-                    username: "john_reader",
-                    firstName: "John",
-                    lastName: "Reader",
-                });
+                console.log("User not authenticated");
+                setIsAuthenticated(false);
+                setCurrentUser(null);
                 return;
             }
 
             const isJSON = res.headers
                 .get("content-type")
                 ?.includes("application/json");
+
             if (res.ok && isJSON) {
                 const userData = await res.json();
-                console.log("Current user:", userData);
+                console.log("User authenticated:", userData);
+                setIsAuthenticated(true);
                 setCurrentUser(userData);
             } else {
-                console.log(
-                    "Failed to fetch user profile - using fake user for testing"
-                );
-                setCurrentUser({
-                    _id: "user001",
-                    username: "john_reader",
-                    firstName: "John",
-                    lastName: "Reader",
-                });
+                console.log("Authentication check failed");
+                setIsAuthenticated(false);
+                setCurrentUser(null);
             }
         } catch (e) {
-            console.error("Error fetching profile:", e);
-            console.log("Network error - using fake user for testing");
-            setCurrentUser({
-                _id: "user001",
-                username: "john_reader",
-                firstName: "John",
-                lastName: "Reader",
-            });
+            console.error("Error checking authentication:", e);
+            setIsAuthenticated(false);
+            setCurrentUser(null);
+        } finally {
+            setAuthLoading(false);
         }
     };
 
+    // --------- Navigation Helper ----------
+    const navigateToUserProfile = (userId: string) => {
+        if (userId === currentUser?._id) {
+            navigate("/Account/Profile");
+        } else {
+            navigate(`/Account/Profile/${userId}`);
+        }
+    };
+
+    const handleBackNavigation = () => {
+        if (window.history.length > 1) {
+            navigate(-1);
+        } else {
+            navigate('/search');
+        }
+    };
+
+    const handleSignIn = () => {
+        // Navigate to sign-in page with return URL to come back to this book
+        navigate('/Account/Signin', {
+            state: {
+                returnTo: `/details/${googleId}`,
+                bookTitle: book?.title // Optional: pass book title for better UX
+            }
+        });
+    };
+
+    // --------- Fetchers ----------
     const fetchBookDetails = async () => {
         try {
             setIsLoading(true);
@@ -302,7 +298,6 @@ const BookInfo: React.FC = () => {
         setIsSubmittingReview(true);
         setReviewError(null);
 
-        // Find user's review for this book
         const userReview = reviews.find(
             (r) => currentUser && r.user._id === currentUser._id
         );
@@ -311,7 +306,6 @@ const BookInfo: React.FC = () => {
         try {
             let response;
             if (isEditing && userReview) {
-                // Update existing review
                 response = await fetch(
                     `${API_BASE_URL}/api/reviews/${userReview._id}`,
                     {
@@ -328,7 +322,6 @@ const BookInfo: React.FC = () => {
                     }
                 );
             } else {
-                // Create new review
                 response = await fetch(`${API_BASE_URL}/api/reviews`, {
                     method: "POST",
                     headers: {
@@ -382,15 +375,20 @@ const BookInfo: React.FC = () => {
     useEffect(() => {
         if (!googleId) return;
 
-        fetchCurrentUser(); // This will now set fake user on 401
-        fetchBookDetails();
-        fetchBookReviews();
-        // don't check favorites until we know the user
+        // First check authentication
+        checkAuthentication();
     }, [googleId]);
 
+    // Only fetch data after authentication is confirmed
     useEffect(() => {
-        if (googleId && currentUser) checkIfFavorited();
-    }, [googleId, currentUser]);
+        if (!googleId || isAuthenticated === null) return;
+
+        if (isAuthenticated) {
+            fetchBookDetails();
+            fetchBookReviews();
+            checkIfFavorited();
+        }
+    }, [googleId, isAuthenticated]);
 
     // --------- Helpers ----------
     const renderStars = (
@@ -461,7 +459,57 @@ const BookInfo: React.FC = () => {
         (r) => currentUser && r.user._id === currentUser._id
     );
 
-    // --------- Early states ----------
+    // --------- Authentication Loading State ----------
+    if (authLoading) {
+        return (
+            <Container className="mt-4">
+                <div className="text-center loading-container">
+                    <Spinner animation="border" role="status" className="loading-spinner">
+                        <span className="visually-hidden">Checking authentication...</span>
+                    </Spinner>
+                    <p className="mt-3 loading-text">Verifying access...</p>
+                </div>
+            </Container>
+        );
+    }
+
+    // --------- Authentication Required State ----------
+    if (isAuthenticated === false) {
+        return (
+            <Container className="mt-4">
+                <Alert variant="warning" className="auth-required-alert" style={{ marginTop: '40px', marginLeft: '40px' }}>
+                    <div className="text-center">
+                        <FaLock size={48} className="mb-3 text-warning" />
+                        <h4>Sign In Required</h4>
+                        <p className="mb-4" style={{ marginTop: '20px', marginLeft: '20px' }}>
+                            You need to be signed in to view detailed book information,
+                            write reviews, and manage your favorites.
+                        </p>
+                        <div className="d-flex gap-2 justify-content-center" style={{ marginTop: '30px', marginLeft: '20px' }}>
+                            <Button
+                                variant="primary"
+                                onClick={handleSignIn}
+                                size="lg"
+                            >
+                                Sign In
+                            </Button>
+                            <Button
+                                variant="outline-secondary"
+                                onClick={handleBackNavigation}
+                                size="lg"
+                                style={{ marginLeft: '15px' }}
+                            >
+                                <FaArrowLeft className="me-2" />
+                                Go Back
+                            </Button>
+                        </div>
+                    </div>
+                </Alert>
+            </Container>
+        );
+    }
+
+    // --------- Book Loading State ----------
     if (isLoading) {
         return (
             <Container className="mt-4">
@@ -475,6 +523,7 @@ const BookInfo: React.FC = () => {
         );
     }
 
+    // --------- Error State ----------
     if (error || !book) {
         return (
             <Container className="mt-4">
@@ -502,11 +551,11 @@ const BookInfo: React.FC = () => {
         );
     }
 
-    // --------- Main render ----------
+    // --------- Main render (rest of your existing JSX remains the same) ----------
     return (
         <div className="book-info-page">
             <Container className="py-4">
-                {/* Add Back Button at the top */}
+                {/* Back Button */}
                 <Button
                     variant="outline-primary"
                     onClick={handleBackNavigation}
@@ -520,6 +569,7 @@ const BookInfo: React.FC = () => {
                     Back to Results
                 </Button>
 
+                {/* Rest of your existing JSX for the book info display... */}
                 {/* SECTION 1: Book Info */}
                 <section className="book-info-card p-4 mb-4">
                     <header className="book-header">
@@ -543,9 +593,8 @@ const BookInfo: React.FC = () => {
                     </header>
 
                     <div className="book-content-row mt-3">
-                        {/* Image and Metadata Section - Centered */}
+                        {/* Image and Metadata Section */}
                         <div className="book-image-metadata-section">
-                            {/* Image Column */}
                             <div className="book-image-column">
                                 {book.image || book.thumbnail ? (
                                     <img
@@ -558,7 +607,6 @@ const BookInfo: React.FC = () => {
                                 )}
                             </div>
 
-                            {/* Metadata next to image */}
                             <div className="metadata-section">
                                 <div className="book-metadata">
                                     <div className="metadata-item">
@@ -595,7 +643,7 @@ const BookInfo: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* Full-width Details Section */}
+                        {/* Details Section */}
                         <div className="book-details-column">
                             {/* Categories */}
                             <div className="categories-section">
@@ -616,7 +664,7 @@ const BookInfo: React.FC = () => {
                                 </div>
                             </div>
 
-                            {/* Favorite Button above Description */}
+                            {/* Favorite Button */}
                             <div className="favorite-section">
                                 <Button
                                     variant={isFavorited ? "danger" : "outline-danger"}
@@ -657,7 +705,7 @@ const BookInfo: React.FC = () => {
                     </div>
                 </section>
 
-                {/* SECTION 2: User's Review (if exists) */}
+                {/* User's Review Section */}
                 {currentUser && userHasReviewed && (
                     <section className="user-review-card mb-4">
                         <Card>
@@ -735,7 +783,7 @@ const BookInfo: React.FC = () => {
                     </section>
                 )}
 
-                {/* SECTION 3: Add/Edit Review Form */}
+                {/* Add/Edit Review Form */}
                 {currentUser && (!userHasReviewed || isEditingReview) ? (
                     <section className="add-review-card mb-4">
                         <Card>
@@ -828,7 +876,7 @@ const BookInfo: React.FC = () => {
                     </section>
                 ) : null}
 
-                {/* SECTION 4: All Reviews */}
+                {/* All Reviews Section */}
                 <section className="reviews-card">
                     <div className="reviews-header p-3">
                         <div className="reviews-header-content">
@@ -851,7 +899,7 @@ const BookInfo: React.FC = () => {
                                     </div>
                                 ) : reviews.length === 0 ? (
                                     <div className="no-reviews">
-                                        <div className="no-reviews-icon">📝</div>
+                                        <div className="no-reviews-icon">📖</div>
                                         <h6>No reviews yet</h6>
                                         <p>Be the first to share your thoughts about this book!</p>
                                     </div>
