@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Button, Alert } from 'react-bootstrap';
-import { FaUsers, FaTrash } from 'react-icons/fa';
+import { FaUsers, FaTrash, FaPlus, FaEdit } from 'react-icons/fa';
 import './UserManagement.css';
 
 const API_BASE_URL = (import.meta as any)?.env?.VITE_REMOTE_SERVER || "http://localhost:4000";
@@ -18,6 +18,14 @@ interface User {
     lastLoginAt?: string;
 }
 
+interface UserFormData {
+    username: string;
+    email: string;
+    password: string;
+    role: 'admin' | 'writer' | 'reader';
+    bio?: string;
+}
+
 export default function UserManagement() {
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
@@ -25,6 +33,16 @@ export default function UserManagement() {
     const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [deleteConfirm, setDeleteConfirm] = useState<User | null>(null);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [showAddModal, setShowAddModal] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [editingUser, setEditingUser] = useState<User | null>(null);
+    const [userForm, setUserForm] = useState<UserFormData>({
+        username: '',
+        email: '',
+        password: '',
+        role: 'reader',
+        bio: ''
+    });
 
     useEffect(() => {
         fetchCurrentUser();
@@ -105,6 +123,104 @@ export default function UserManagement() {
             setDeleteConfirm(null);
             setShowDeleteModal(false);
         }
+    };
+
+    const handleAddUser = async () => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/users/signup`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include',
+                body: JSON.stringify(userForm)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to create user');
+            }
+
+            alert('User created successfully!');
+
+            // Reset form and close modal
+            setUserForm({
+                username: '',
+                email: '',
+                password: '',
+                role: 'reader',
+                bio: ''
+            });
+            setShowAddModal(false);
+
+            // Refresh user list
+            fetchUsers();
+
+        } catch (err: any) {
+            alert(`Error creating user: ${err.message}`);
+        }
+    };
+
+    const handleEditUser = async () => {
+        if (!editingUser) return;
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/admin/users/${editingUser._id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include',
+                body: JSON.stringify(userForm)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to update user');
+            }
+
+            alert('User updated successfully!');
+
+            // Reset form and close modal
+            setUserForm({
+                username: '',
+                email: '',
+                password: '',
+                role: 'reader',
+                bio: ''
+            });
+            setShowEditModal(false);
+            setEditingUser(null);
+
+            // Refresh user list
+            fetchUsers();
+
+        } catch (err: any) {
+            alert(`Error updating user: ${err.message}`);
+        }
+    };
+
+    const openAddModal = () => {
+        setUserForm({
+            username: '',
+            email: '',
+            password: '',
+            role: 'reader',
+            bio: ''
+        });
+        setShowAddModal(true);
+    };
+
+    const openEditModal = (user: User) => {
+        setEditingUser(user);
+        setUserForm({
+            username: user.username,
+            email: user.email,
+            password: '', // Don't pre-fill password
+            role: user.role,
+            bio: user.bio || ''
+        });
+        setShowEditModal(true);
     };
 
     const getIdentityBadge = (role: string) => {
@@ -226,6 +342,13 @@ export default function UserManagement() {
                             <div className="users-table-container">
                                 <div className="users-table-header">
                                     <h3 className="table-title">All Users ({users.length})</h3>
+                                    <button
+                                        onClick={openAddModal}
+                                        className="add-user-btn"
+                                    >
+                                        <FaPlus />
+                                        Add User
+                                    </button>
                                 </div>
 
                                 <div className="users-list">
@@ -253,14 +376,24 @@ export default function UserManagement() {
                                                 {/* Actions - Always show for admin */}
                                                 <div className="user-actions">
                                                     {user._id !== currentUser._id ? (
-                                                        <button
-                                                            onClick={() => confirmDelete(user)}
-                                                            className="delete-btn"
-                                                            title="Delete user"
-                                                        >
-                                                            <FaTrash />
-                                                            Delete
-                                                        </button>
+                                                        <div className="action-buttons">
+                                                            <button
+                                                                onClick={() => openEditModal(user)}
+                                                                className="edit-btn"
+                                                                title="Edit user"
+                                                            >
+                                                                <FaEdit />
+                                                                Edit
+                                                            </button>
+                                                            <button
+                                                                onClick={() => confirmDelete(user)}
+                                                                className="delete-btn"
+                                                                title="Delete user"
+                                                            >
+                                                                <FaTrash />
+                                                                Delete
+                                                            </button>
+                                                        </div>
                                                     ) : (
                                                         <span className="current-user-label">You</span>
                                                     )}
@@ -273,6 +406,180 @@ export default function UserManagement() {
                         )}
                     </div>
                 </div>
+
+                {/* Add User Modal */}
+                {showAddModal && (
+                    <div className="modal-overlay">
+                        <div className="modal-content">
+                            <div className="modal-header">
+                                <div className="modal-icon add-icon">
+                                    <FaPlus />
+                                </div>
+                                <div className="modal-title-section">
+                                    <h3 className="modal-title">Add New User</h3>
+                                    <p className="modal-subtitle">Create a new user account</p>
+                                </div>
+                            </div>
+
+                            <div className="modal-body">
+                                <div className="form-group">
+                                    <label>Username</label>
+                                    <input
+                                        type="text"
+                                        value={userForm.username}
+                                        onChange={(e) => setUserForm({ ...userForm, username: e.target.value })}
+                                        className="form-input"
+                                        placeholder="Enter username"
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label>Email</label>
+                                    <input
+                                        type="email"
+                                        value={userForm.email}
+                                        onChange={(e) => setUserForm({ ...userForm, email: e.target.value })}
+                                        className="form-input"
+                                        placeholder="Enter email"
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label>Password</label>
+                                    <input
+                                        type="password"
+                                        value={userForm.password}
+                                        onChange={(e) => setUserForm({ ...userForm, password: e.target.value })}
+                                        className="form-input"
+                                        placeholder="Enter password"
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label>Role</label>
+                                    <select
+                                        value={userForm.role}
+                                        onChange={(e) => setUserForm({ ...userForm, role: e.target.value as 'admin' | 'writer' | 'reader' })}
+                                        className="form-input"
+                                    >
+                                        <option value="reader">Reader</option>
+                                        <option value="writer">Writer</option>
+                                        <option value="admin">Admin</option>
+                                    </select>
+                                </div>
+                                <div className="form-group">
+                                    <label>Bio (Optional)</label>
+                                    <textarea
+                                        value={userForm.bio}
+                                        onChange={(e) => setUserForm({ ...userForm, bio: e.target.value })}
+                                        className="form-input"
+                                        placeholder="Enter bio"
+                                        rows={3}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="modal-footer">
+                                <button
+                                    onClick={() => setShowAddModal(false)}
+                                    className="btn-cancel"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleAddUser}
+                                    className="btn-primary"
+                                >
+                                    Add User
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Edit User Modal */}
+                {showEditModal && editingUser && (
+                    <div className="modal-overlay">
+                        <div className="modal-content">
+                            <div className="modal-header">
+                                <div className="modal-icon edit-icon">
+                                    <FaEdit />
+                                </div>
+                                <div className="modal-title-section">
+                                    <h3 className="modal-title">Edit User</h3>
+                                    <p className="modal-subtitle">Update user information</p>
+                                </div>
+                            </div>
+
+                            <div className="modal-body">
+                                <div className="form-group">
+                                    <label>Username</label>
+                                    <input
+                                        type="text"
+                                        value={userForm.username}
+                                        onChange={(e) => setUserForm({ ...userForm, username: e.target.value })}
+                                        className="form-input"
+                                        placeholder="Enter username"
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label>Email</label>
+                                    <input
+                                        type="email"
+                                        value={userForm.email}
+                                        onChange={(e) => setUserForm({ ...userForm, email: e.target.value })}
+                                        className="form-input"
+                                        placeholder="Enter email"
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label>Password (Leave blank to keep current)</label>
+                                    <input
+                                        type="password"
+                                        value={userForm.password}
+                                        onChange={(e) => setUserForm({ ...userForm, password: e.target.value })}
+                                        className="form-input"
+                                        placeholder="Enter new password"
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label>Role</label>
+                                    <select
+                                        value={userForm.role}
+                                        onChange={(e) => setUserForm({ ...userForm, role: e.target.value as 'admin' | 'writer' | 'reader' })}
+                                        className="form-input"
+                                    >
+                                        <option value="reader">Reader</option>
+                                        <option value="writer">Writer</option>
+                                        <option value="admin">Admin</option>
+                                    </select>
+                                </div>
+                                <div className="form-group">
+                                    <label>Bio</label>
+                                    <textarea
+                                        value={userForm.bio}
+                                        onChange={(e) => setUserForm({ ...userForm, bio: e.target.value })}
+                                        className="form-input"
+                                        placeholder="Enter bio"
+                                        rows={3}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="modal-footer">
+                                <button
+                                    onClick={() => setShowEditModal(false)}
+                                    className="btn-cancel"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleEditUser}
+                                    className="btn-primary"
+                                >
+                                    Update User
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Delete Confirmation Modal */}
                 {showDeleteModal && deleteConfirm && (
