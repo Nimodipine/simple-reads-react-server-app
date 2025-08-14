@@ -32,17 +32,24 @@ export default function UserProfileList() {
         try {
             setLoading(true);
             setError(''); // Clear any previous errors
-            const response = await fetch(`${API_BASE_URL}/api/users`, {
-                credentials: 'include'
-            });
+
+            // Try to fetch users without requiring authentication
+            const response = await fetch(`${API_BASE_URL}/api/users`);
 
             if (!response.ok) {
+                // If it fails, still try to show users but handle gracefully
+                if (response.status === 401) {
+                    // For public access, we might want to show users anyway
+                    // You may need to create a public endpoint or modify the backend
+                    throw new Error('Unable to load users at this time');
+                }
                 throw new Error('Failed to fetch users');
             }
 
             const users = await response.json();
             setUsers(users);
         } catch (err: any) {
+            console.error('Error fetching users:', err);
             setError(err.message);
         } finally {
             setLoading(false);
@@ -102,6 +109,10 @@ export default function UserProfileList() {
                             <div className="error-container">
                                 <div className="error-alert">
                                     <p>Error: {error}</p>
+                                    <p className="error-subtext">
+                                        This page shows all users in the community.
+                                        {error.includes('Unable to load') && ' Please try again later or contact support.'}
+                                    </p>
                                     <button onClick={fetchUsers} className="retry-btn">
                                         Retry
                                     </button>
@@ -111,6 +122,9 @@ export default function UserProfileList() {
                             <div className="no-users-container">
                                 <FaUsers size={64} className="no-users-icon" />
                                 <p className="no-users-text">No users found</p>
+                                <p className="no-users-subtext">
+                                    Be the first to join our community!
+                                </p>
                             </div>
                         ) : (
                             <div className="users-table-container">
