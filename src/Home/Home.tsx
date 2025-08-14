@@ -1,12 +1,21 @@
 import React, { useState, useEffect } from "react";
-import { Card, Col, Container, Form, FormControl, ListGroup, Row } from "react-bootstrap";
-import { FaTimes } from 'react-icons/fa';
-import { useNavigate } from 'react-router-dom';
+import {
+    Card,
+    Col,
+    Container,
+    Form,
+    FormControl,
+    ListGroup,
+    Row,
+} from "react-bootstrap";
+import { FaTimes } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 import Navigation from "../Navigation";
 import Header from "../Header";
-import './home.css';
+import "./home.css";
 
-const API_BASE_URL = import.meta.env.VITE_REMOTE_SERVER || 'http://localhost:4000';
+const API_BASE_URL =
+    import.meta.env.VITE_REMOTE_SERVER || "http://localhost:4000";
 
 export interface HomeProps {
     isLoggedIn?: boolean;
@@ -54,24 +63,65 @@ interface Review {
         _id: string;
         username: string;
     };
-    book: {
+    book:
+    | {
         _id: string;
         googleId: string;
         title: string;
-    };
+    }
+    | string;
 }
 
-export default function Home({ isLoggedIn = false, user, onLogOut }: HomeProps) {
+export default function Home({
+    isLoggedIn = false,
+    user,
+    onLogOut,
+}: HomeProps) {
     const [searchQuery, setSearchQuery] = useState("");
     const [trendingBooks, setTrendingBooks] = useState<Book[]>([]);
     const [topReviews, setTopReviews] = useState<Review[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    // Store book titles for reviews by googleId
+    const [reviewBookTitles, setReviewBookTitles] = useState<{
+        [googleId: string]: string;
+    }>({});
     const navigate = useNavigate();
 
     useEffect(() => {
         fetchHomeData();
     }, [isLoggedIn, user]);
+
+    // Fetch book titles for reviews when topReviews changes
+    useEffect(() => {
+        if (!topReviews || topReviews.length === 0) return;
+
+        topReviews.forEach((review) => {
+            // Handle both cases: book as string or book as object
+            const googleId =
+                typeof review.book === "string" ? review.book : review.book?.googleId;
+
+            if (!googleId || reviewBookTitles[googleId]) return;
+
+            // Fetch each book title individually and update state incrementally
+            fetch(`${API_BASE_URL}/api/books/${googleId}`)
+                .then((res) => (res.ok ? res.json() : null))
+                .then((data) => {
+                    if (data && data.success && data.book && data.book.title) {
+                        setReviewBookTitles((prev) => ({
+                            ...prev,
+                            [googleId]: data.book.title,
+                        }));
+                    }
+                })
+                .catch(() => {
+                    setReviewBookTitles((prev) => ({
+                        ...prev,
+                        [googleId]: "Unknown Book",
+                    }));
+                });
+        });
+    }, [topReviews]);
 
     const fetchHomeData = async () => {
         try {
@@ -81,14 +131,14 @@ export default function Home({ isLoggedIn = false, user, onLogOut }: HomeProps) 
             // Fetch trending books and top reviews in parallel
             const [booksResponse, reviewsResponse] = await Promise.all([
                 fetchTrendingBooks(),
-                fetchTopReviews()
+                fetchTopReviews(),
             ]);
 
             setTrendingBooks(booksResponse);
             setTopReviews(reviewsResponse);
         } catch (err) {
-            console.error('Error fetching home data:', err);
-            setError('Failed to load content. Please try again later.');
+            console.error("Error fetching home data:", err);
+            setError("Failed to load content. Please try again later.");
         } finally {
             setLoading(false);
         }
@@ -97,9 +147,12 @@ export default function Home({ isLoggedIn = false, user, onLogOut }: HomeProps) 
     const fetchTrendingBooks = async (): Promise<Book[]> => {
         try {
             // Use the existing search endpoint to get popular books
-            const response = await fetch(`${API_BASE_URL}/api/books/search?q=bestseller&maxResults=5`, {
-                credentials: 'include'
-            });
+            const response = await fetch(
+                `${API_BASE_URL}/api/books/search?q=bestseller&maxResults=5`,
+                {
+                    credentials: "include",
+                }
+            );
 
             if (response.ok) {
                 const data = await response.json();
@@ -107,9 +160,12 @@ export default function Home({ isLoggedIn = false, user, onLogOut }: HomeProps) 
             }
 
             // Alternative fallback searches
-            const fallbackResponse = await fetch(`${API_BASE_URL}/api/books/search?q=popular&maxResults=5`, {
-                credentials: 'include'
-            });
+            const fallbackResponse = await fetch(
+                `${API_BASE_URL}/api/books/search?q=popular&maxResults=5`,
+                {
+                    credentials: "include",
+                }
+            );
 
             if (fallbackResponse.ok) {
                 const fallbackData = await fallbackResponse.json();
@@ -118,7 +174,7 @@ export default function Home({ isLoggedIn = false, user, onLogOut }: HomeProps) 
 
             return [];
         } catch (error) {
-            console.error('Error fetching trending books:', error);
+            console.error("Error fetching trending books:", error);
             return [];
         }
     };
@@ -129,13 +185,16 @@ export default function Home({ isLoggedIn = false, user, onLogOut }: HomeProps) 
 
             if (isLoggedIn && user?._id) {
                 // Fetch reviews from users that the current user is following
-                response = await fetch(`${API_BASE_URL}/api/profile/${user._id}/following/reviews`, {
-                    credentials: 'include'
-                });
+                response = await fetch(
+                    `${API_BASE_URL}/api/profile/${user._id}/following/reviews`,
+                    {
+                        credentials: "include",
+                    }
+                );
             } else {
                 // Fetch random reviews for non-logged-in users or users without _id
                 response = await fetch(`${API_BASE_URL}/api/reviews/random`, {
-                    credentials: 'include'
+                    credentials: "include",
                 });
             }
 
@@ -150,20 +209,25 @@ export default function Home({ isLoggedIn = false, user, onLogOut }: HomeProps) 
 
             // Fallback: if the new endpoints fail, try the random reviews endpoint
             if (isLoggedIn) {
-                const fallbackResponse = await fetch(`${API_BASE_URL}/api/reviews/random`, {
-                    credentials: 'include'
-                });
+                const fallbackResponse = await fetch(
+                    `${API_BASE_URL}/api/reviews/random`,
+                    {
+                        credentials: "include",
+                    }
+                );
 
                 if (fallbackResponse.ok) {
                     const fallbackData = await fallbackResponse.json();
-                    const fallbackReviews = Array.isArray(fallbackData) ? fallbackData : fallbackData.reviews || [];
+                    const fallbackReviews = Array.isArray(fallbackData)
+                        ? fallbackData
+                        : fallbackData.reviews || [];
                     return fallbackReviews.slice(0, 3);
                 }
             }
 
             return [];
         } catch (error) {
-            console.error('Error fetching reviews:', error);
+            console.error("Error fetching reviews:", error);
             return [];
         }
     };
@@ -173,7 +237,9 @@ export default function Home({ isLoggedIn = false, user, onLogOut }: HomeProps) 
         if (!searchQuery.trim()) return;
 
         try {
-            const url = `${API_BASE_URL}/api/books/search?q=${encodeURIComponent(searchQuery.trim())}&maxResults=1`;
+            const url = `${API_BASE_URL}/api/books/search?q=${encodeURIComponent(
+                searchQuery.trim()
+            )}&maxResults=1`;
             const res = await fetch(url, { credentials: "include" });
             if (!res.ok) throw new Error("Search failed");
 
@@ -191,7 +257,6 @@ export default function Home({ isLoggedIn = false, user, onLogOut }: HomeProps) 
         }
     };
 
-
     const handleBookClick = (book: Book) => {
         // Navigate to details page with the book's Google ID
         navigate(`/details/${book.googleId}`);
@@ -206,11 +271,23 @@ export default function Home({ isLoggedIn = false, user, onLogOut }: HomeProps) 
 
         for (let i = 0; i < 5; i++) {
             if (i < fullStars) {
-                stars.push(<span key={i} className="star-filled">★</span>);
+                stars.push(
+                    <span key={i} className="star-filled">
+                        ★
+                    </span>
+                );
             } else if (i === fullStars && hasHalfStar) {
-                stars.push(<span key={i} className="star-half">★</span>);
+                stars.push(
+                    <span key={i} className="star-half">
+                        ★
+                    </span>
+                );
             } else {
-                stars.push(<span key={i} className="star-empty">☆</span>);
+                stars.push(
+                    <span key={i} className="star-empty">
+                        ☆
+                    </span>
+                );
             }
         }
 
@@ -225,15 +302,15 @@ export default function Home({ isLoggedIn = false, user, onLogOut }: HomeProps) 
     };
 
     const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric'
+        return new Date(dateString).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
         });
     };
 
     const truncateText = (text: string, maxLength: number) => {
         if (text.length <= maxLength) return text;
-        return text.substring(0, maxLength) + '...';
+        return text.substring(0, maxLength) + "...";
     };
 
     if (loading) {
@@ -245,7 +322,10 @@ export default function Home({ isLoggedIn = false, user, onLogOut }: HomeProps) 
                 <Header isLoggedIn={isLoggedIn} user={user} onLogOut={onLogOut} />
                 <div className="home-layout">
                     <Container fluid>
-                        <div className="d-flex justify-content-center align-items-center" style={{ height: '400px' }}>
+                        <div
+                            className="d-flex justify-content-center align-items-center"
+                            style={{ height: "400px" }}
+                        >
                             <div className="text-center">
                                 <div className="spinner-border text-primary" role="status">
                                     <span className="visually-hidden">Loading...</span>
@@ -267,27 +347,30 @@ export default function Home({ isLoggedIn = false, user, onLogOut }: HomeProps) 
             </div>
 
             {/* Top Header */}
-            <Header
-                isLoggedIn={isLoggedIn}
-                user={user}
-                onLogOut={onLogOut}
-            />
+            <Header isLoggedIn={isLoggedIn} user={user} onLogOut={onLogOut} />
 
             {/* Main Content */}
             <div className="home-layout">
                 <Container fluid>
                     <Row className="g-0">
                         <Col xs={12} className="center-feed">
-
                             {/* Large Search Bar Section */}
                             <section className="search-section p-5 mb-4" aria-label="Search">
                                 <div className="section-header-search">
-                                    <h2 className="section-title">Discover Your Next Great Read</h2>
-                                    <p className="section-subtitle">Search for books, authors, reviews, and more</p>
+                                    <h2 className="section-title">
+                                        Discover Your Next Great Read
+                                    </h2>
+                                    <p className="section-subtitle">
+                                        Search for books, authors, reviews, and more
+                                    </p>
                                 </div>
 
                                 {/* Enhanced Search Form */}
-                                <Form role="search" className="d-flex justify-content-center search-form" onSubmit={handleSearch}>
+                                <Form
+                                    role="search"
+                                    className="d-flex justify-content-center search-form"
+                                    onSubmit={handleSearch}
+                                >
                                     <div className="search-input-container">
                                         <FormControl
                                             type="search"
@@ -297,19 +380,21 @@ export default function Home({ isLoggedIn = false, user, onLogOut }: HomeProps) 
                                             value={searchQuery}
                                             onChange={(e) => setSearchQuery(e.target.value)}
                                             onFocus={(e) => {
-                                                e.target.style.borderColor = '#667eea';
-                                                e.target.style.boxShadow = '0 8px 24px rgba(102, 126, 234, 0.15)';
+                                                e.target.style.borderColor = "#667eea";
+                                                e.target.style.boxShadow =
+                                                    "0 8px 24px rgba(102, 126, 234, 0.15)";
                                             }}
                                             onBlur={(e) => {
-                                                e.target.style.borderColor = '#e2e8f0';
-                                                e.target.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
+                                                e.target.style.borderColor = "#e2e8f0";
+                                                e.target.style.boxShadow =
+                                                    "0 4px 12px rgba(0, 0, 0, 0.1)";
                                             }}
                                         />
                                         {searchQuery && (
                                             <button
                                                 type="button"
                                                 className="clear-search-btn"
-                                                onClick={() => setSearchQuery('')}
+                                                onClick={() => setSearchQuery("")}
                                                 aria-label="Clear search"
                                             >
                                                 <FaTimes />
@@ -336,28 +421,38 @@ export default function Home({ isLoggedIn = false, user, onLogOut }: HomeProps) 
                             <Row className="g-3 px-3">
                                 {/* Explore Section - Trending Books */}
                                 <Col xs={12} md={6}>
-                                    <section className="explore-section p-4" aria-label="Trending Books">
+                                    <section
+                                        className="explore-section p-4"
+                                        aria-label="Trending Books"
+                                    >
                                         <div className="section-header">
                                             <h3 className="section-title">Trending Books</h3>
                                             <p className="section-subtitle-small">
-                                                {trendingBooks.length > 0 ? 'Popular books in our community' : 'Discover great books'}
+                                                {trendingBooks.length > 0
+                                                    ? "Popular books in our community"
+                                                    : "Discover great books"}
                                             </p>
                                         </div>
                                         <div className="trending-books-container">
                                             {trendingBooks.length > 0 ? (
                                                 trendingBooks.map((book, index) => (
                                                     <div key={book._id} className="book-card">
-                                                        <Card className="h-100 book-card-clickable" onClick={() => handleBookClick(book)} style={{ cursor: 'pointer' }}>
+                                                        <Card
+                                                            className="h-100 book-card-clickable"
+                                                            onClick={() => handleBookClick(book)}
+                                                            style={{ cursor: "pointer" }}
+                                                        >
                                                             <Card.Body className="p-3">
                                                                 <div className="d-flex align-items-center justify-content-between mb-2">
                                                                     <span className="badge bg-primary rounded-circle ranking-badge">
                                                                         {index + 1}
                                                                     </span>
-                                                                    {book.categories && book.categories.length > 0 && (
-                                                                        <span className="badge bg-light text-dark genre-badge">
-                                                                            {book.categories[0]}
-                                                                        </span>
-                                                                    )}
+                                                                    {book.categories &&
+                                                                        book.categories.length > 0 && (
+                                                                            <span className="badge bg-light text-dark genre-badge">
+                                                                                {book.categories[0]}
+                                                                            </span>
+                                                                        )}
                                                                 </div>
                                                                 <div className="book-cover-placeholder">
                                                                     {book.thumbnail ? (
@@ -366,15 +461,23 @@ export default function Home({ isLoggedIn = false, user, onLogOut }: HomeProps) 
                                                                             alt={book.title}
                                                                             className="book-cover-image"
                                                                             onError={(e) => {
-                                                                                e.currentTarget.style.display = 'none';
-                                                                                const nextElement = e.currentTarget.nextElementSibling as HTMLElement;
+                                                                                e.currentTarget.style.display = "none";
+                                                                                const nextElement = e.currentTarget
+                                                                                    .nextElementSibling as HTMLElement;
                                                                                 if (nextElement) {
-                                                                                    nextElement.style.display = 'block';
+                                                                                    nextElement.style.display = "block";
                                                                                 }
                                                                             }}
                                                                         />
                                                                     ) : null}
-                                                                    <span className="book-cover-emoji" style={{ display: book.thumbnail ? 'none' : 'block' }}>
+                                                                    <span
+                                                                        className="book-cover-emoji"
+                                                                        style={{
+                                                                            display: book.thumbnail
+                                                                                ? "none"
+                                                                                : "block",
+                                                                        }}
+                                                                    >
                                                                         📖
                                                                     </span>
                                                                 </div>
@@ -382,23 +485,28 @@ export default function Home({ isLoggedIn = false, user, onLogOut }: HomeProps) 
                                                                     {truncateText(book.title, 50)}
                                                                 </h6>
                                                                 <p className="book-author">
-                                                                    by {book.authors.join(', ')}
+                                                                    by {book.authors.join(", ")}
                                                                 </p>
-                                                                {book.internalRating && book.internalRating > 0 && (
-                                                                    <div className="book-rating">
-                                                                        {renderStars(Math.round(book.internalRating))}
-                                                                        <span className="rating-text">
-                                                                            ({book.internalRatingsCount || 0})
-                                                                        </span>
-                                                                    </div>
-                                                                )}
+                                                                {book.internalRating &&
+                                                                    book.internalRating > 0 && (
+                                                                        <div className="book-rating">
+                                                                            {renderStars(
+                                                                                Math.round(book.internalRating)
+                                                                            )}
+                                                                            <span className="rating-text">
+                                                                                ({book.internalRatingsCount || 0})
+                                                                            </span>
+                                                                        </div>
+                                                                    )}
                                                             </Card.Body>
                                                         </Card>
                                                     </div>
                                                 ))
                                             ) : (
                                                 <div className="text-center py-4">
-                                                    <p className="text-muted">No trending books available yet.</p>
+                                                    <p className="text-muted">
+                                                        No trending books available yet.
+                                                    </p>
                                                     <small>Check back later for popular titles!</small>
                                                 </div>
                                             )}
@@ -408,23 +516,38 @@ export default function Home({ isLoggedIn = false, user, onLogOut }: HomeProps) 
 
                                 {/* Community Section - Top Book Reviews */}
                                 <Col xs={12} md={6}>
-                                    <section className="community-section p-4" aria-label="Community Reviews">
+                                    <section
+                                        className="community-section p-4"
+                                        aria-label="Community Reviews"
+                                    >
                                         <div className="section-header">
                                             <h3 className="section-title">
-                                                {isLoggedIn ? 'Reviews from People You Follow' : 'Community Reviews'}
+                                                {isLoggedIn
+                                                    ? "Reviews from People You Follow"
+                                                    : "Community Reviews"}
                                             </h3>
                                             <p className="section-subtitle-small">
                                                 {isLoggedIn
-                                                    ? 'Latest reviews from users you follow'
-                                                    : 'Discover what other readers are saying'
-                                                }
+                                                    ? "Latest reviews from users you follow"
+                                                    : "Discover what other readers are saying"}
                                             </p>
                                         </div>
                                         <div className="reviews-container">
                                             <ListGroup variant="flush">
                                                 {topReviews.length > 0 ? (
                                                     topReviews.map((review, index) => (
-                                                        <ListGroup.Item key={review._id} className="px-0 py-3 border-0 border-bottom">
+                                                        <ListGroup.Item
+                                                            key={review._id}
+                                                            className="px-0 py-3 border-0 border-bottom review-list-item"
+                                                            style={{ cursor: "pointer" }}
+                                                            onClick={() => {
+                                                                const googleId =
+                                                                    typeof review.book === "string"
+                                                                        ? review.book
+                                                                        : review.book?.googleId;
+                                                                navigate(`/details/${googleId}`);
+                                                            }}
+                                                        >
                                                             <div className="review-item-content">
                                                                 <div className="review-badge-container">
                                                                     <span className="badge bg-success rounded-circle ranking-badge">
@@ -432,22 +555,66 @@ export default function Home({ isLoggedIn = false, user, onLogOut }: HomeProps) 
                                                                     </span>
                                                                 </div>
                                                                 <div className="review-content">
-                                                                    <div className="review-header">
-                                                                        <h6 className="review-book-title">
-                                                                            {truncateText(review.book?.title || 'Unknown Book', 40)}
-                                                                        </h6>
-                                                                        <div className="review-stars">
+                                                                    <div className="review-header d-flex align-items-center justify-content-between">
+                                                                        <h1 className="review-book-title mb-0">
+                                                                            {truncateText(
+                                                                                (() => {
+                                                                                    // Get googleId whether book is string or object
+                                                                                    const googleId =
+                                                                                        typeof review.book === "string"
+                                                                                            ? review.book
+                                                                                            : review.book?.googleId;
+
+                                                                                    // Return the title
+                                                                                    return (
+                                                                                        reviewBookTitles[googleId] ||
+                                                                                        (typeof review.book === "object"
+                                                                                            ? review.book?.title
+                                                                                            : null) ||
+                                                                                        "Unknown Book"
+                                                                                    );
+                                                                                })(),
+                                                                                40
+                                                                            )}
+                                                                        </h1>
+                                                                        <div className="review-stars d-flex align-items-center">
                                                                             {renderStars(review.rating)}
                                                                         </div>
                                                                     </div>
                                                                     <p className="review-meta">
-                                                                        Review by <span className="review-reviewer">@{review.user?.username || 'Anonymous'}</span>
-                                                                        <span className="review-date"> • {formatDate(review.createdAt)}</span>
+                                                                        Review by{" "}
+                                                                        <span
+                                                                            className="review-reviewer clickable"
+                                                                            style={{
+                                                                                color: "#2563eb",
+                                                                                textDecoration: "underline",
+                                                                                cursor: "pointer",
+                                                                            }}
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                if (review.user?._id) {
+                                                                                    navigate(
+                                                                                        `/Account/Profile/${review.user._id}`
+                                                                                    );
+                                                                                }
+                                                                            }}
+                                                                        >
+                                                                            @{review.user?.username || "Anonymous"}
+                                                                        </span>
+                                                                        <span className="review-date">
+                                                                            {" "}
+                                                                            • {formatDate(review.createdAt)}
+                                                                        </span>
                                                                         {isLoggedIn && (
-                                                                            <span className="following-badge"> • Following</span>
+                                                                            <span className="following-badge">
+                                                                                {" "}
+                                                                                • Following
+                                                                            </span>
                                                                         )}
                                                                     </p>
-                                                                    <h6 className="review-title">{review.title}</h6>
+                                                                    <h6 className="review-title">
+                                                                        {review.title}
+                                                                    </h6>
                                                                     <p className="review-snippet">
                                                                         {truncateText(review.content, 120)}
                                                                     </p>
@@ -459,15 +626,13 @@ export default function Home({ isLoggedIn = false, user, onLogOut }: HomeProps) 
                                                     <div className="text-center py-4">
                                                         <p className="text-muted">
                                                             {isLoggedIn
-                                                                ? 'No reviews from people you follow yet.'
-                                                                : 'No reviews available yet.'
-                                                            }
+                                                                ? "No reviews from people you follow yet."
+                                                                : "No reviews available yet."}
                                                         </p>
                                                         <small>
                                                             {isLoggedIn
-                                                                ? 'Follow some users to see their reviews here!'
-                                                                : 'Be the first to write a review!'
-                                                            }
+                                                                ? "Follow some users to see their reviews here!"
+                                                                : "Be the first to write a review!"}
                                                         </small>
                                                     </div>
                                                 )}

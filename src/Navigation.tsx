@@ -1,6 +1,6 @@
 import { Nav } from "react-bootstrap";
 import { NavLink, } from "react-router-dom";
-import { FaHome, FaUser, FaSearch } from "react-icons/fa";
+import { FaHome, FaUser, FaSearch, FaUsers } from "react-icons/fa";
 
 /**
  * Left-rail navigation used by Home. Vertical layout with spacing.
@@ -11,6 +11,7 @@ export default function Navigation() {
         { label: "Home", path: "/home", icon: FaHome, className: "nav-item-home", iconClassName: "icon-home" },
         { label: "Search", path: "/search", icon: FaSearch, className: "nav-item-search", iconClassName: "icon-search" },
         { label: "Profile", path: "/Account/Profile", icon: FaUser, className: "nav-item-profile", iconClassName: "icon-profile" },
+        { label: "Users", path: "/users", icon: FaUsers, className: "nav-item-users", iconClassName: "icon-users" },
     ];
 
     return (

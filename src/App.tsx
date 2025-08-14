@@ -7,6 +7,7 @@ import Search from "./Search/search";
 import BookInfo from "./Search/bookinfo";
 import { Provider } from "react-redux";
 import { store } from "./store";
+import UserManagement from "./UserManagement";
 
 export default function App() {
   return (
@@ -28,6 +29,7 @@ export default function App() {
           <Route path="/Account/Profile" element={<Profile />} />
           <Route path="/Account/Profile/:userId" element={<Profile />} />
           <Route path="/search" element={<Search />} />
+          <Route path="/users" element={<UserManagement />} />
           {/* Add the book details route */}
           <Route path="/details/:googleId" element={<BookInfo />} />
           {/* Optional: You can also add the alternative route pattern */}
