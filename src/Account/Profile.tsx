@@ -79,6 +79,19 @@ const ProfileHome = () => {
         bio: "",
     });
 
+    // Add formatDate function to match BookInfo formatting
+    const formatDate = (dateString: string) => {
+        try {
+            return new Date(dateString).toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+            });
+        } catch {
+            return dateString;
+        }
+    };
+
     useEffect(() => {
         const viewingUserId = userId || currentUser?._id;
         const isOwn = !userId || userId === currentUser?._id;
@@ -297,7 +310,7 @@ const ProfileHome = () => {
             case "admin":
                 return { text: "👑 Admin", class: "verified-badge-admin" };
             case "writer":
-                return { text: "✍️ Writer", class: "verified-badge-writer" };
+                return { text: "✏️ Writer", class: "verified-badge-writer" };
             case "reader":
             default:
                 return { text: "📖 Reader", class: "verified-badge-reader" };
@@ -702,8 +715,7 @@ const ProfileHome = () => {
                                                         <span
                                                             style={{ fontSize: "12px", color: "#6b7280" }}
                                                         >
-                                                            Added:{" "}
-                                                            {new Date(favorite.addedAt).toLocaleDateString()}
+                                                            Added: {formatDate(favorite.addedAt)}
                                                         </span>
                                                     </div>
                                                     <h4 className="content-detail-title">
@@ -763,7 +775,7 @@ const ProfileHome = () => {
                                                         <span
                                                             style={{ fontSize: "12px", color: "#6b7280" }}
                                                         >
-                                                            {new Date(review.createdAt).toLocaleDateString()}
+                                                            {formatDate(review.createdAt)}
                                                         </span>
                                                     </div>
                                                     <h4 className="content-detail-title">
