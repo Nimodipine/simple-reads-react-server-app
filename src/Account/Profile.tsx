@@ -67,6 +67,10 @@ const ProfileHome = () => {
     const [favorites, setFavorites] = useState<Favorite[]>([]);
     const [isFollowing, setIsFollowing] = useState(false);
     const [followLoading, setFollowLoading] = useState(false);
+    // Book titles by googleId for favorites and reviews
+    const [bookTitles, setBookTitles] = useState<{ [googleId: string]: string }>(
+        {}
+    );
 
     // Form state for editing
     const [editForm, setEditForm] = useState<EditForm>({
@@ -88,6 +92,31 @@ const ProfileHome = () => {
             checkFollowStatus(viewingUserId);
         }
     }, [userId, currentUser]);
+
+    // Fetch book titles for favorites and reviews when they change
+    useEffect(() => {
+        // Collect all googleIds from favorites and reviews
+        const googleIds = [
+            ...favorites.map((fav) => fav.book),
+            ...reviews.map((rev) => rev.book || ""),
+        ].filter((id) => id && !bookTitles[id]);
+
+        // Fetch missing titles
+        googleIds.forEach((googleId) => {
+            fetch(`${API_BASE_URL}/api/books/${googleId}`)
+                .then((res) => (res.ok ? res.json() : null))
+                .then((data) => {
+                    if (data && data.success && data.book && data.book.title) {
+                        setBookTitles((prev) => ({ ...prev, [googleId]: data.book.title }));
+                    } else {
+                        setBookTitles((prev) => ({ ...prev, [googleId]: "Unknown Book" }));
+                    }
+                })
+                .catch(() => {
+                    setBookTitles((prev) => ({ ...prev, [googleId]: "Unknown Book" }));
+                });
+        });
+    }, [favorites, reviews]);
 
     const checkFollowStatus = async (viewingUserId: string) => {
         try {
@@ -159,27 +188,33 @@ const ProfileHome = () => {
             dispatch(setLoading(true));
 
             // Use the correct endpoints that exist in routes.js
-            const [followersCountRes, followingCountRes, followersRes, followingRes, reviewsRes, favoritesRes] =
-                await Promise.all([
-                    fetch(`${API_BASE_URL}/api/profile/${viewingUserId}/followers/count`, {
-                        credentials: "include",
-                    }),
-                    fetch(`${API_BASE_URL}/api/profile/${viewingUserId}/following/count`, {
-                        credentials: "include",
-                    }),
-                    fetch(`${API_BASE_URL}/api/profile/${viewingUserId}/followers`, {
-                        credentials: "include",
-                    }),
-                    fetch(`${API_BASE_URL}/api/profile/${viewingUserId}/following`, {
-                        credentials: "include",
-                    }),
-                    fetch(`${API_BASE_URL}/api/profile/${viewingUserId}/reviews`, {
-                        credentials: "include",
-                    }),
-                    fetch(`${API_BASE_URL}/api/favorites/user/${viewingUserId}`, {
-                        credentials: "include",
-                    }),
-                ]);
+            const [
+                followersCountRes,
+                followingCountRes,
+                followersRes,
+                followingRes,
+                reviewsRes,
+                favoritesRes,
+            ] = await Promise.all([
+                fetch(`${API_BASE_URL}/api/profile/${viewingUserId}/followers/count`, {
+                    credentials: "include",
+                }),
+                fetch(`${API_BASE_URL}/api/profile/${viewingUserId}/following/count`, {
+                    credentials: "include",
+                }),
+                fetch(`${API_BASE_URL}/api/profile/${viewingUserId}/followers`, {
+                    credentials: "include",
+                }),
+                fetch(`${API_BASE_URL}/api/profile/${viewingUserId}/following`, {
+                    credentials: "include",
+                }),
+                fetch(`${API_BASE_URL}/api/profile/${viewingUserId}/reviews`, {
+                    credentials: "include",
+                }),
+                fetch(`${API_BASE_URL}/api/favorites/user/${viewingUserId}`, {
+                    credentials: "include",
+                }),
+            ]);
 
             // Handle follow stats - combine the count responses
             const followStats = { followersCount: 0, followingCount: 0 };
@@ -348,7 +383,7 @@ const ProfileHome = () => {
                         style={{
                             marginTop: "1rem",
                             padding: "0.75rem 1.5rem",
-                            fontSize: "1rem"
+                            fontSize: "1rem",
                         }}
                     >
                         Sign In
@@ -497,14 +532,14 @@ const ProfileHome = () => {
                                     <button
                                         onClick={handleFollow}
                                         disabled={followLoading}
-                                        className={`btn-primary ${isFollowing ? "btn-unfollow" : ""}`}
+                                        className={`btn-primary ${isFollowing ? "btn-unfollow" : ""
+                                            }`}
                                     >
                                         {followLoading
                                             ? "..."
                                             : isFollowing
                                                 ? "👤- Unfollow"
-                                                : "👤+ Follow"
-                                        }
+                                                : "👤+ Follow"}
                                     </button>
                                 )}
 
@@ -537,15 +572,17 @@ const ProfileHome = () => {
                 {/* Navigation Tabs */}
                 <div className="nav-tabs-container">
                     <div className="nav-tabs">
-                        {["followers", "following", "favorites", "reviews", "info"].map((tab) => (
-                            <button
-                                key={tab}
-                                onClick={() => setActiveTab(tab)}
-                                className={`nav-tab ${activeTab === tab ? "active" : ""}`}
-                            >
-                                {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                            </button>
-                        ))}
+                        {["followers", "following", "favorites", "reviews", "info"].map(
+                            (tab) => (
+                                <button
+                                    key={tab}
+                                    onClick={() => setActiveTab(tab)}
+                                    className={`nav-tab ${activeTab === tab ? "active" : ""}`}
+                                >
+                                    {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                                </button>
+                            )
+                        )}
                     </div>
                 </div>
 
@@ -659,16 +696,18 @@ const ProfileHome = () => {
                                                                 borderRadius: "4px",
                                                             }}
                                                         >
-                                                            Book ID: {favorite.book}
+                                                            {bookTitles[favorite.book] ||
+                                                                "Book ID: " + favorite.book}
                                                         </span>
                                                         <span
                                                             style={{ fontSize: "12px", color: "#6b7280" }}
                                                         >
-                                                            Added: {new Date(favorite.addedAt).toLocaleDateString()}
+                                                            Added:{" "}
+                                                            {new Date(favorite.addedAt).toLocaleDateString()}
                                                         </span>
                                                     </div>
                                                     <h4 className="content-detail-title">
-                                                        Favorite Book
+                                                        {bookTitles[favorite.book] || "Favorite Book"}
                                                     </h4>
                                                 </div>
                                                 <p className="content-detail-snippet">
@@ -686,114 +725,59 @@ const ProfileHome = () => {
                         {activeTab === "reviews" && (
                             <div className="card">
                                 <h3 className="card-title">⭐ All Reviews</h3>
-
                                 <div className="content-items">
-                                    {isOwnProfile ? (
-                                        // Show full reviews for own profile
-                                        reviews.length > 0 ? (
-                                            reviews.map((review) => (
-                                                <div
-                                                    key={review._id}
-                                                    className="content-detail-item"
-                                                    style={{ cursor: "pointer" }}
-                                                    onClick={() => review.book && navigateToBookInfo(review.book)}
-                                                >
-                                                    <div className="content-detail-header">
-                                                        <div
-                                                            style={{
-                                                                display: "flex",
-                                                                alignItems: "center",
-                                                                gap: "12px",
-                                                                marginBottom: "12px",
-                                                            }}
-                                                        >
-                                                            <div style={{ display: "flex" }}>
-                                                                {renderStars(review.rating)}
-                                                            </div>
-                                                            <span
-                                                                style={{
-                                                                    fontSize: "12px",
-                                                                    color: "#6b7280",
-                                                                    background: "#f3f4f6",
-                                                                    padding: "2px 8px",
-                                                                    borderRadius: "4px",
-                                                                }}
-                                                            >
-                                                                Book ID: {review.book || "Unknown"}
-                                                            </span>
-                                                            <span
-                                                                style={{ fontSize: "12px", color: "#6b7280" }}
-                                                            >
-                                                                {new Date(
-                                                                    review.createdAt
-                                                                ).toLocaleDateString()}
-                                                            </span>
-                                                        </div>
-                                                        <h4 className="content-detail-title">
-                                                            {review.title}
-                                                        </h4>
-                                                    </div>
-                                                    <p className="content-detail-snippet">
-                                                        {review.content}
-                                                    </p>
-                                                </div>
-                                            ))
-                                        ) : (
-                                            <p>No reviews yet</p>
-                                        )
-                                    ) : // Show limited reviews for other users' profiles
-                                        reviews.length > 0 ? (
-                                            reviews.map((review) => (
-                                                <div
-                                                    key={review._id}
-                                                    className="content-detail-item"
-                                                    style={{ cursor: "pointer" }}
-                                                    onClick={() => review.book && navigateToBookInfo(review.book)}
-                                                >
-                                                    <div className="content-detail-header">
-                                                        <div
-                                                            style={{
-                                                                display: "flex",
-                                                                alignItems: "center",
-                                                                gap: "12px",
-                                                                marginBottom: "12px",
-                                                            }}
-                                                        >
-                                                            <div style={{ display: "flex" }}>
-                                                                {renderStars(review.rating)}
-                                                            </div>
-                                                            <span
-                                                                style={{
-                                                                    fontSize: "12px",
-                                                                    color: "#6b7280",
-                                                                    background: "#f3f4f6",
-                                                                    padding: "2px 8px",
-                                                                    borderRadius: "4px",
-                                                                }}
-                                                            >
-                                                                Book ID: {review.book || "Unknown"}
-                                                            </span>
-                                                            <span
-                                                                style={{ fontSize: "12px", color: "#6b7280" }}
-                                                            >
-                                                                {new Date(review.createdAt).toLocaleDateString()}
-                                                            </span>
-                                                        </div>
-                                                        <h4 className="content-detail-title">
-                                                            {review.title}
-                                                        </h4>
-                                                    </div>
-                                                    <p
-                                                        className="content-detail-snippet"
-                                                        style={{ fontStyle: "italic", color: "#6b7280" }}
+                                    {reviews.length > 0 ? (
+                                        reviews.map((review) => (
+                                            <div
+                                                key={review._id}
+                                                className="content-detail-item"
+                                                style={{ cursor: "pointer" }}
+                                                onClick={() =>
+                                                    review.book && navigateToBookInfo(review.book)
+                                                }
+                                            >
+                                                <div className="content-detail-header">
+                                                    <div
+                                                        style={{
+                                                            display: "flex",
+                                                            alignItems: "center",
+                                                            gap: "12px",
+                                                            marginBottom: "12px",
+                                                        }}
                                                     >
-                                                        Review content is private
-                                                    </p>
+                                                        <div style={{ display: "flex" }}>
+                                                            {renderStars(review.rating)}
+                                                        </div>
+                                                        <span
+                                                            style={{
+                                                                fontSize: "12px",
+                                                                color: "#6b7280",
+                                                                background: "#f3f4f6",
+                                                                padding: "2px 8px",
+                                                                borderRadius: "4px",
+                                                            }}
+                                                        >
+                                                            {bookTitles[review.book || ""] ||
+                                                                "Book ID: " + (review.book || "Unknown")}
+                                                        </span>
+                                                        <span
+                                                            style={{ fontSize: "12px", color: "#6b7280" }}
+                                                        >
+                                                            {new Date(review.createdAt).toLocaleDateString()}
+                                                        </span>
+                                                    </div>
+                                                    <h4 className="content-detail-title">
+                                                        {review.title}
+                                                    </h4>
                                                 </div>
-                                            ))
-                                        ) : (
-                                            <p>No reviews yet</p>
-                                        )}
+                                                <p className="content-detail-snippet">
+                                                    {review.content}
+                                                </p>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <p>No reviews yet</p>
+                                    )}
                                 </div>
                             </div>
                         )}
@@ -801,7 +785,6 @@ const ProfileHome = () => {
                         {activeTab === "info" && (
                             <div className="card">
                                 <h3 className="card-title">📋 Personal Information</h3>
-
                                 <div className="content-items">
                                     <div className="info-section">
                                         <div className="info-item">
@@ -834,6 +817,14 @@ const ProfileHome = () => {
                                                         identity.charAt(0).toUpperCase() + identity.slice(1)
                                                     );
                                                 })()}
+                                            </div>
+                                        </div>
+
+                                        {/* Always show bio */}
+                                        <div className="info-item">
+                                            <div className="info-label">📝 Bio</div>
+                                            <div className="info-value">
+                                                {profileUser?.bio || "Not provided"}
                                             </div>
                                         </div>
                                     </div>

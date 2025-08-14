@@ -427,7 +427,7 @@ export default function Home() {
                                                                     {book.categories &&
                                                                         book.categories.length > 0 && (
                                                                             <span className="badge bg-light text-dark genre-badge">
-                                                                                {book.categories[0]}
+                                                                                {truncateText(book.categories[0], 18)}
                                                                             </span>
                                                                         )}
                                                                 </div>
