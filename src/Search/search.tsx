@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Form, Card } from 'react-bootstrap';
 import { FaSearch, FaTimes, FaStar } from 'react-icons/fa';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import './search.css';
 
 const API_BASE_URL =
@@ -23,7 +23,6 @@ interface Book {
     infoLink: string;
 }
 
-
 export default function Search() {
     const [searchTerm, setSearchTerm] = useState('');
     const [searchResults, setSearchResults] = useState<Book[]>([]);
@@ -31,59 +30,122 @@ export default function Search() {
     const [hasSearched, setHasSearched] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
 
-    const handleSearch = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!searchTerm.trim()) return;
+    // Load search state from URL parameters on component mount
+    useEffect(() => {
+        const urlQuery = searchParams.get('q');
+        const urlResults = searchParams.get('results');
+
+        if (urlQuery) {
+            setSearchTerm(urlQuery);
+            setHasSearched(true);
+
+            // If we have cached results in URL, try to restore them
+            if (urlResults) {
+                try {
+                    const cachedResults = JSON.parse(decodeURIComponent(urlResults));
+                    if (Array.isArray(cachedResults) && cachedResults.length > 0) {
+                        setSearchResults(cachedResults);
+                        return; // Don't perform new search if we have cached results
+                    }
+                } catch (e) {
+                    console.error('Failed to parse cached results:', e);
+                }
+            }
+
+            // If no valid cached results, perform the search
+            performSearch(urlQuery);
+        }
+    }, []);
+
+    // Update URL when search term or results change
+    const updateURL = (query: string, results?: Book[]) => {
+        const newSearchParams = new URLSearchParams();
+        if (query.trim()) {
+            newSearchParams.set('q', query.trim());
+            if (results && results.length > 0) {
+                // Cache results in URL (with size limit to avoid URL length issues)
+                try {
+                    const resultsString = JSON.stringify(results);
+                    // Only cache if the JSON string is reasonably sized (less than 8KB)
+                    if (resultsString.length < 8192) {
+                        newSearchParams.set('results', encodeURIComponent(resultsString));
+                    }
+                } catch (e) {
+                    console.error('Failed to cache results in URL:', e);
+                }
+            }
+        }
+        setSearchParams(newSearchParams);
+    };
+
+    const performSearch = async (query: string) => {
+        if (!query.trim()) return;
 
         setIsLoading(true);
         setError(null);
         setHasSearched(true);
 
         try {
-            const url = `${API_BASE_URL}/api/books/search?q=${encodeURIComponent(searchTerm.trim())}&maxResults=20`;
-            const res = await fetch(url, { credentials: "include" }); // include if your API needs session cookies
+            const url = `${API_BASE_URL}/api/books/search?q=${encodeURIComponent(query.trim())}&maxResults=20`;
+            const res = await fetch(url, { credentials: "include" });
             const contentType = res.headers.get("content-type") || "";
 
             if (!res.ok) {
-                // Try to read any text message for debugging
                 const msg = await res.text();
-                throw new Error(`HTTP ${res.status} – ${msg.slice(0, 120)}`);
+                throw new Error(`HTTP ${res.status} — ${msg.slice(0, 120)}`);
             }
             if (!contentType.includes("application/json")) {
                 const body = await res.text();
                 throw new Error(`Expected JSON, got: ${contentType}. Snippet: ${body.slice(0, 120)}`);
             }
 
-            const data = await res.json(); // { success, count, query, books }
-            if (data.success) setSearchResults(data.books);
-            else {
+            const data = await res.json();
+            if (data.success) {
+                setSearchResults(data.books);
+                updateURL(query, data.books);
+            } else {
                 setError("Failed to search books. Please try again.");
                 setSearchResults([]);
+                updateURL(query);
             }
         } catch (err: any) {
             console.error("Search error:", err);
             setError("An error occurred while searching. Please try again.");
             setSearchResults([]);
+            updateURL(query);
         } finally {
             setIsLoading(false);
         }
     };
 
+    const handleSearch = async (e: React.FormEvent) => {
+        e.preventDefault();
+        await performSearch(searchTerm);
+    };
+
     const handleSuggestionClick = (suggestion: string) => {
         setSearchTerm(suggestion);
-        // Trigger search automatically when suggestion is clicked
+        // Perform search immediately when suggestion is clicked
         setTimeout(() => {
-            const form = document.querySelector('.main-search-form') as HTMLFormElement;
-            if (form) {
-                form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
-            }
+            performSearch(suggestion);
         }, 100);
     };
 
     const handleBookClick = (book: Book) => {
         // Navigate to details page with the book's Google ID
+        // The current search state is already preserved in the URL
         navigate(`/details/${book.googleId}`);
+    };
+
+    const handleClearSearch = () => {
+        setSearchTerm('');
+        setSearchResults([]);
+        setHasSearched(false);
+        setError(null);
+        // Clear URL parameters
+        setSearchParams(new URLSearchParams());
     };
 
     const renderStars = (rating: number, ratingsCount?: number) => {
@@ -142,12 +204,7 @@ export default function Search() {
                                     <button
                                         type="button"
                                         className="clear-search-btn"
-                                        onClick={() => {
-                                            setSearchTerm('');
-                                            setSearchResults([]);
-                                            setHasSearched(false);
-                                            setError(null);
-                                        }}
+                                        onClick={handleClearSearch}
                                         aria-label="Clear search"
                                     >
                                         <FaTimes />

@@ -109,6 +109,17 @@ const BookInfo: React.FC = () => {
         }
     };
 
+    const handleBackNavigation = () => {
+        // Check if there's a previous page in history
+        if (window.history.length > 1) {
+            // Use browser back to preserve search state
+            navigate(-1);
+        } else {
+            // Fallback to search page if no history
+            navigate('/search');
+        }
+    };
+
     // --------- Fetchers ----------
     const fetchCurrentUser = async () => {
         try {
@@ -495,6 +506,16 @@ const BookInfo: React.FC = () => {
     return (
         <div className="book-info-page">
             <Container className="py-4">
+                {/* Add Back Button at the top */}
+                <Button
+                    variant="outline-primary"
+                    onClick={handleBackNavigation}
+                    className="mb-4"
+                >
+                    <FaArrowLeft className="me-2" />
+                    Back to Results
+                </Button>
+
                 {/* SECTION 1: Book Info */}
                 <section className="book-info-card p-4 mb-4">
                     <header className="book-header">

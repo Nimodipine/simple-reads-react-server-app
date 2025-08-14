@@ -131,6 +131,17 @@ const BookDetails: React.FC = () => {
         }
     };
 
+    const handleBackNavigation = () => {
+        // Check if there's a previous page in history
+        if (window.history.length > 1) {
+            // Use browser back to preserve search state
+            navigate(-1);
+        } else {
+            // Fallback to search page if no history
+            navigate('/search');
+        }
+    };
+
     const formatDate = (dateString: string) => {
         try {
             return new Date(dateString).toLocaleDateString('en-US', {
@@ -176,7 +187,7 @@ const BookDetails: React.FC = () => {
             <Container className="mt-4">
                 <Button
                     variant="outline-primary"
-                    onClick={() => navigate(-1)}
+                    onClick={handleBackNavigation}
                     className="mb-4"
                 >
                     <FaArrowLeft className="me-2" />
