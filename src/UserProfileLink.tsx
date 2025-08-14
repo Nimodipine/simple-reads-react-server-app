@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaUsers } from 'react-icons/fa';
+import { FaUsers, FaHome } from 'react-icons/fa';
+import { Button } from 'react-bootstrap';
 import './UserManagement.css';
 
 const API_BASE_URL = (import.meta as any)?.env?.VITE_REMOTE_SERVER || "http://localhost:4000";
@@ -21,6 +22,7 @@ interface User {
 export default function UserProfileList() {
     const navigate = useNavigate();
     const [users, setUsers] = useState<User[]>([]);
+    const [allUsers, setAllUsers] = useState<User[]>([]);
     const [, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
@@ -29,29 +31,22 @@ export default function UserProfileList() {
         fetchUsers();
     }, []);
 
-    const fetchUsers = async (search?: string) => {
+    const fetchUsers = async () => {
         try {
             setLoading(true);
-            setError(''); // Clear any previous errors
+            setError('');
 
-            const url = search
-                ? `${API_BASE_URL}/api/users?search=${encodeURIComponent(search)}`
-                : `${API_BASE_URL}/api/users`;
-
-            // Try to fetch users without requiring authentication
-            const response = await fetch(url);
+            const response = await fetch(`${API_BASE_URL}/api/users`);
 
             if (!response.ok) {
-                // If it fails, still try to show users but handle gracefully
                 if (response.status === 401) {
-                    // For public access, we might want to show users anyway
-                    // You may need to create a public endpoint or modify the backend
                     throw new Error('Unable to load users at this time');
                 }
                 throw new Error('Failed to fetch users');
             }
 
             const users = await response.json();
+            setAllUsers(users);
             setUsers(users);
         } catch (err: any) {
             console.error('Error fetching users:', err);
@@ -66,7 +61,7 @@ export default function UserProfileList() {
             case 'admin':
                 return { text: '👑 Admin', class: 'verified-badge-admin' };
             case 'writer':
-                return { text: '✏️ Writer', class: 'verified-badge-writer' };
+                return { text: '✍️ Writer', class: 'verified-badge-writer' };
             case 'reader':
             default:
                 return { text: '📖 Reader', class: 'verified-badge-reader' };
@@ -77,22 +72,48 @@ export default function UserProfileList() {
         navigate(`/Account/Profile/${userId}`);
     };
 
-    const handleSearch = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
         setSearchTerm(value);
 
-        // Immediate search like the Users.tsx component
         if (value.trim()) {
-            await fetchUsers(value.trim());
+            const filteredUsers = allUsers.filter(user =>
+                user.username.toLowerCase().includes(value.toLowerCase()) ||
+                user.email.toLowerCase().includes(value.toLowerCase()) ||
+                user.role.toLowerCase().includes(value.toLowerCase())
+            );
+            setUsers(filteredUsers);
         } else {
-            await fetchUsers();
+            setUsers(allUsers);
         }
     };
 
     return (
         <div className="user-management-container">
+            <Button
+                variant="outline-primary"
+                className="home-btn"
+                onClick={() => navigate('/home')}
+                style={{
+                    position: 'absolute',
+                    top: '20px',
+                    left: '20px',
+                    zIndex: 1000,
+                    borderRadius: '50%',
+                    width: '50px',
+                    height: '50px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginTop: '10px',
+                    marginLeft: '10px'
+                }}
+                title="Go to Home"
+            >
+                <FaHome style={{ fontSize: '18px' }} />
+            </Button>
+
             <div className="user-management-wrapper">
-                {/* Header */}
                 <div className="user-management-header">
                     <div className="user-management-header-bg"></div>
                     <div className="user-management-header-content">
@@ -105,57 +126,57 @@ export default function UserProfileList() {
                     </div>
                 </div>
 
-                {/* Users List */}
                 <div className="users-content">
                     <div className="users-card">
-                        {error ? (
-                            <div className="error-container">
-                                <div className="error-alert">
-                                    <p>Error: {error}</p>
-                                    <p className="error-subtext">
-                                        This page shows all users in the community.
-                                        {error.includes('Unable to load') && ' Please try again later or contact support.'}
-                                    </p>
-                                    <button onClick={() => fetchUsers()} className="retry-btn">
-                                        Retry
-                                    </button>
-                                </div>
-                            </div>
-                        ) : users.length === 0 ? (
-                            <div className="no-users-container">
-                                <FaUsers size={64} className="no-users-icon" />
-                                <p className="no-users-text">No users found</p>
-                                <p className="no-users-subtext">
-                                    {searchTerm ? 'Try adjusting your search terms.' : 'Be the first to join our community!'}
-                                </p>
-                            </div>
-                        ) : (
-                            <div className="users-table-container">
-                                <div className="users-table-header">
-                                    <h3 className="table-title">All Users ({users.length})</h3>
-                                    <div className="table-actions">
-                                        <div className="search-container">
-                                            <input
-                                                type="text"
-                                                placeholder="Search users..."
-                                                value={searchTerm}
-                                                onChange={handleSearch}
-                                                className="search-input"
-                                            />
-                                        </div>
+                        <div className="users-table-container">
+                            <div className="users-table-header">
+                                <h3 className="table-title">All Users ({users.length})</h3>
+                                <div className="table-actions">
+                                    <div className="search-container">
+                                        <input
+                                            type="text"
+                                            placeholder="Search users..."
+                                            value={searchTerm}
+                                            onChange={handleSearch}
+                                            className="search-input"
+                                        />
                                     </div>
                                 </div>
+                            </div>
 
+                            {error ? (
+                                <div className="error-container">
+                                    <div className="error-alert">
+                                        <p>Error: {error}</p>
+                                        <p className="error-subtext">
+                                            This page shows all users in the community.
+                                            {error.includes('Unable to load') && ' Please try again later or contact support.'}
+                                        </p>
+                                        <button onClick={() => fetchUsers()} className="retry-btn">
+                                            Retry
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : users.length === 0 ? (
+                                <div className="no-users-container">
+                                    <FaUsers size={64} className="no-users-icon" />
+                                    <p className="no-users-text">
+                                        {searchTerm ? `No users found matching "${searchTerm}"` : 'No users found'}
+                                    </p>
+                                    <p className="no-users-subtext">
+                                        {searchTerm
+                                            ? 'Try adjusting your search terms or clear the search to see all users.'
+                                            : 'Be the first to join our community!'}
+                                    </p>
+                                </div>
+                            ) : (
                                 <div className="users-list">
                                     {users.map((user) => (
                                         <div key={user._id} className="user-item">
                                             <div className="user-item-content">
-                                                {/* Avatar */}
                                                 <div className="user-avatar">
                                                     {user.username?.charAt(0) || '?'}
                                                 </div>
-
-                                                {/* User Info - Make username clickable */}
                                                 <div className="user-info">
                                                     <div className="user-name-section">
                                                         <h4
@@ -168,14 +189,13 @@ export default function UserProfileList() {
                                                             {getIdentityBadge(user.role).text}
                                                         </div>
                                                     </div>
-                                                    {/* No user ID displayed */}
                                                 </div>
                                             </div>
                                         </div>
                                     ))}
                                 </div>
-                            </div>
-                        )}
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
