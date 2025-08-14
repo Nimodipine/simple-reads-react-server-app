@@ -10,6 +10,7 @@ import {
     FaHeart,
     FaRegHeart,
     FaLock,
+    FaHome,
 } from "react-icons/fa";
 import "./detail.css";
 import "./bookinfo.css";
@@ -551,23 +552,58 @@ const BookInfo: React.FC = () => {
         );
     }
 
-    // --------- Main render (rest of your existing JSX remains the same) ----------
+    // --------- Main render ----------
     return (
         <div className="book-info-page">
             <Container className="py-4">
-                {/* Back Button */}
-                <Button
-                    variant="outline-primary"
-                    onClick={handleBackNavigation}
-                    className="mb-4"
-                    style={{
-                        marginTop: '20px',
-                        marginLeft: '20px'
-                    }}
-                >
-                    <FaArrowLeft className="me-2" />
-                    Back to Results
-                </Button>
+                {/* Navigation Buttons - Only show when authenticated */}
+                <div style={{ position: 'relative' }}>
+                    {/* Back Button */}
+                    <Button
+                        variant="outline-primary"
+                        onClick={handleBackNavigation}
+                        style={{
+                            position: 'absolute',
+                            top: '20px',
+                            left: '20px',
+                            zIndex: 1000,
+                            borderRadius: '50%',
+                            width: '50px',
+                            height: '50px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            marginTop: '10px',
+                            marginLeft: '10px'
+                        }}
+                        title="Go Back"
+                    >
+                        <FaArrowLeft style={{ fontSize: '20px' }} />
+                    </Button>
+
+                    {/* Home Button */}
+                    <Button
+                        variant="outline-primary"
+                        onClick={() => navigate('/home')}
+                        style={{
+                            position: 'absolute',
+                            top: '20px',
+                            left: '90px',
+                            zIndex: 1000,
+                            borderRadius: '50%',
+                            width: '50px',
+                            height: '50px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            marginTop: '10px',
+                            marginLeft: '10px'
+                        }}
+                        title="Go to Home"
+                    >
+                        <FaHome style={{ fontSize: '20px' }} />
+                    </Button>
+                </div>
 
                 {/* Rest of your existing JSX for the book info display... */}
                 {/* SECTION 1: Book Info */}

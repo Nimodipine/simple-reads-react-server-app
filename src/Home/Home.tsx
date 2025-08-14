@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useSelector } from "react-redux";
 import {
     Card,
     Col,
@@ -17,20 +18,7 @@ import "./home.css";
 const API_BASE_URL =
     import.meta.env.VITE_REMOTE_SERVER || "http://localhost:4000";
 
-export interface HomeProps {
-    isLoggedIn?: boolean;
-    user?: {
-        _id?: string;
-        name: string;
-        handle: string;
-        avatarUrl?: string;
-    };
-    genericFeed?: React.ReactNode;
-    personalizedFeed?: React.ReactNode;
-    onSignUp?: () => void;
-    onLogIn?: () => void;
-    onLogOut?: () => void;
-}
+// Removed HomeProps, use Redux state instead
 
 interface Book {
     _id: string;
@@ -71,11 +59,17 @@ interface Review {
     | string;
 }
 
-export default function Home({
-    isLoggedIn = false,
-    user,
-    onLogOut,
-}: HomeProps) {
+export default function Home() {
+    const currentUser = useSelector((state: any) => state.account.currentUser);
+    const isLoggedIn = !!currentUser;
+    const user = currentUser
+        ? {
+            _id: currentUser._id,
+            name: currentUser.name || currentUser.username,
+            handle: currentUser.handle || currentUser.username,
+            avatarUrl: currentUser.avatarUrl,
+        }
+        : undefined;
     const [searchQuery, setSearchQuery] = useState("");
     const [trendingBooks, setTrendingBooks] = useState<Book[]>([]);
     const [topReviews, setTopReviews] = useState<Review[]>([]);
@@ -89,7 +83,7 @@ export default function Home({
 
     useEffect(() => {
         fetchHomeData();
-    }, [isLoggedIn, user]);
+    }, [isLoggedIn, currentUser?._id]);
 
     // Fetch book titles for reviews when topReviews changes
     useEffect(() => {
@@ -159,7 +153,6 @@ export default function Home({
             return [];
         }
     };
-
 
     const fetchTopReviews = async (): Promise<Review[]> => {
         try {
@@ -301,7 +294,7 @@ export default function Home({
                 <div className="left-rail">
                     <Navigation />
                 </div>
-                <Header isLoggedIn={isLoggedIn} user={user} onLogOut={onLogOut} />
+                <Header isLoggedIn={isLoggedIn} user={user} />
                 <div className="home-layout">
                     <Container fluid>
                         <div
@@ -329,7 +322,7 @@ export default function Home({
             </div>
 
             {/* Top Header */}
-            <Header isLoggedIn={isLoggedIn} user={user} onLogOut={onLogOut} />
+            <Header isLoggedIn={isLoggedIn} user={user} />
 
             {/* Main Content */}
             <div className="home-layout">
@@ -355,6 +348,8 @@ export default function Home({
                                 >
                                     <div className="search-input-container">
                                         <FormControl
+                                            id="home-search-input"
+                                            name="searchQuery"
                                             type="search"
                                             placeholder="Search for books, authors, genres..."
                                             aria-label="Search books"
