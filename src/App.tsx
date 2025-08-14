@@ -17,15 +17,7 @@ export default function App() {
       <Provider store={store}>
         <Routes>
           <Route path="/" element={<Navigate to="/home" replace />} />
-          <Route
-            path="/home"
-            element={
-              <Home
-                isLoggedIn={false}
-                user={{ name: "Megan Feng", handle: "meganfeng", avatarUrl: "https://placehold.co/48x48" }}
-              />
-            }
-          />
+          <Route path="/home" element={<Home />} />
           <Route path="/Account/Signin" element={<Signin />} />
           <Route path="/Account/Signup" element={<Signup />} />
           <Route path="/Account/Profile" element={<Profile />} />
