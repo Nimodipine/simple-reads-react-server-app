@@ -23,18 +23,23 @@ export default function UserProfileList() {
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
         fetchUsers();
     }, []);
 
-    const fetchUsers = async () => {
+    const fetchUsers = async (search?: string) => {
         try {
             setLoading(true);
             setError(''); // Clear any previous errors
 
+            const url = search
+                ? `${API_BASE_URL}/api/users?search=${encodeURIComponent(search)}`
+                : `${API_BASE_URL}/api/users`;
+
             // Try to fetch users without requiring authentication
-            const response = await fetch(`${API_BASE_URL}/api/users`);
+            const response = await fetch(url);
 
             if (!response.ok) {
                 // If it fails, still try to show users but handle gracefully
@@ -70,6 +75,18 @@ export default function UserProfileList() {
 
     const navigateToUserProfile = (userId: string) => {
         navigate(`/Account/Profile/${userId}`);
+    };
+
+    const handleSearch = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setSearchTerm(value);
+
+        // Immediate search like the Users.tsx component
+        if (value.trim()) {
+            await fetchUsers(value.trim());
+        } else {
+            await fetchUsers();
+        }
     };
 
     if (loading) {
@@ -110,7 +127,7 @@ export default function UserProfileList() {
                                         This page shows all users in the community.
                                         {error.includes('Unable to load') && ' Please try again later or contact support.'}
                                     </p>
-                                    <button onClick={fetchUsers} className="retry-btn">
+                                    <button onClick={() => fetchUsers()} className="retry-btn">
                                         Retry
                                     </button>
                                 </div>
@@ -120,13 +137,24 @@ export default function UserProfileList() {
                                 <FaUsers size={64} className="no-users-icon" />
                                 <p className="no-users-text">No users found</p>
                                 <p className="no-users-subtext">
-                                    Be the first to join our community!
+                                    {searchTerm ? 'Try adjusting your search terms.' : 'Be the first to join our community!'}
                                 </p>
                             </div>
                         ) : (
                             <div className="users-table-container">
                                 <div className="users-table-header">
                                     <h3 className="table-title">All Users ({users.length})</h3>
+                                    <div className="table-actions">
+                                        <div className="search-container">
+                                            <input
+                                                type="text"
+                                                placeholder="Search users..."
+                                                value={searchTerm}
+                                                onChange={handleSearch}
+                                                className="search-input"
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div className="users-list">

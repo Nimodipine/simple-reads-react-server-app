@@ -43,6 +43,7 @@ export default function UserManagement() {
         role: 'reader',
         bio: ''
     });
+    const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
         fetchCurrentUser();
@@ -69,11 +70,16 @@ export default function UserManagement() {
         }
     };
 
-    const fetchUsers = async () => {
+    const fetchUsers = async (search?: string) => {
         try {
             setLoading(true);
             setError(''); // Clear any previous errors
-            const response = await fetch(`${API_BASE_URL}/api/users`, {
+
+            const url = search
+                ? `${API_BASE_URL}/api/users?search=${encodeURIComponent(search)}`
+                : `${API_BASE_URL}/api/users`;
+
+            const response = await fetch(url, {
                 credentials: 'include'
             });
 
@@ -240,6 +246,18 @@ export default function UserManagement() {
         setShowDeleteModal(true);
     };
 
+    const handleSearch = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setSearchTerm(value);
+
+        // Immediate search like the Users.tsx component
+        if (value.trim()) {
+            await fetchUsers(value.trim());
+        } else {
+            await fetchUsers();
+        }
+    };
+
     if (loading) {
         return (
             <div className="user-management-container">
@@ -328,7 +346,7 @@ export default function UserManagement() {
                             <div className="error-container">
                                 <Alert variant="danger" className="error-alert">
                                     <p>Error: {error}</p>
-                                    <Button variant="primary" onClick={fetchUsers} className="retry-btn">
+                                    <Button variant="primary" onClick={() => fetchUsers()} className="retry-btn">
                                         Retry
                                     </Button>
                                 </Alert>
@@ -342,13 +360,24 @@ export default function UserManagement() {
                             <div className="users-table-container">
                                 <div className="users-table-header">
                                     <h3 className="table-title">All Users ({users.length})</h3>
-                                    <button
-                                        onClick={openAddModal}
-                                        className="add-user-btn"
-                                    >
-                                        <FaPlus />
-                                        Add User
-                                    </button>
+                                    <div className="table-actions">
+                                        <div className="search-container">
+                                            <input
+                                                type="text"
+                                                placeholder="Search users..."
+                                                value={searchTerm}
+                                                onChange={handleSearch}
+                                                className="search-input"
+                                            />
+                                        </div>
+                                        <button
+                                            onClick={openAddModal}
+                                            className="add-user-btn"
+                                        >
+                                            <FaPlus />
+                                            Add User
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <div className="users-list">
