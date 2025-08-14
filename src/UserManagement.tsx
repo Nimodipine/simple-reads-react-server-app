@@ -28,7 +28,7 @@ interface UserFormData {
 
 export default function UserManagement() {
     const [users, setUsers] = useState<User[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [deleteConfirm, setDeleteConfirm] = useState<User | null>(null);
@@ -258,16 +258,6 @@ export default function UserManagement() {
         }
     };
 
-    if (loading) {
-        return (
-            <div className="user-management-container">
-                <div className="loading-container">
-                    <div className="loading-spinner"></div>
-                    <p className="loading-text">Loading...</p>
-                </div>
-            </div>
-        );
-    }
 
     if (error && error.includes('sign in')) {
         return (

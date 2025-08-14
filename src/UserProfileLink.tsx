@@ -21,7 +21,7 @@ interface User {
 export default function UserProfileList() {
     const navigate = useNavigate();
     const [users, setUsers] = useState<User[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
 
@@ -88,17 +88,6 @@ export default function UserProfileList() {
             await fetchUsers();
         }
     };
-
-    if (loading) {
-        return (
-            <div className="user-management-container">
-                <div className="loading-container">
-                    <div className="loading-spinner"></div>
-                    <p className="loading-text">Loading users...</p>
-                </div>
-            </div>
-        );
-    }
 
     return (
         <div className="user-management-container">
