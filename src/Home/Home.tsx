@@ -146,38 +146,21 @@ export default function Home({
 
     const fetchTrendingBooks = async (): Promise<Book[]> => {
         try {
-            // Use the existing search endpoint to get popular books
-            const response = await fetch(
-                `${API_BASE_URL}/api/books/search?q=bestseller&maxResults=5`,
-                {
-                    credentials: "include",
-                }
-            );
+            const response = await fetch(`${API_BASE_URL}/api/books/top-engagement`, {
+                credentials: "include",
+            });
 
             if (response.ok) {
                 const data = await response.json();
                 return data.books || [];
             }
-
-            // Alternative fallback searches
-            const fallbackResponse = await fetch(
-                `${API_BASE_URL}/api/books/search?q=popular&maxResults=5`,
-                {
-                    credentials: "include",
-                }
-            );
-
-            if (fallbackResponse.ok) {
-                const fallbackData = await fallbackResponse.json();
-                return fallbackData.books || [];
-            }
-
             return [];
         } catch (error) {
             console.error("Error fetching trending books:", error);
             return [];
         }
     };
+
 
     const fetchTopReviews = async (): Promise<Review[]> => {
         try {
