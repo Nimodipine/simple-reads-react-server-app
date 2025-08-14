@@ -201,9 +201,6 @@ export default function UserManagement() {
                                 <FaUsers className="title-icon" />
                                 User Management
                             </h1>
-                            <p className="page-subtitle">
-                                Manage users in the system (Admin Only)
-                            </p>
                         </div>
                     </div>
                 </div>

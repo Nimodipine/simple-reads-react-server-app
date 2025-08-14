@@ -95,9 +95,6 @@ export default function UserProfileList() {
                                 <FaUsers className="title-icon" />
                                 User Profiles
                             </h1>
-                            <p className="page-subtitle">
-                                Browse all user profiles in the community
-                            </p>
                         </div>
                     </div>
                 </div>
