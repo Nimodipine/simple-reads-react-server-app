@@ -107,8 +107,6 @@ export default function UserManagement() {
         }
     };
 
-
-
     const getIdentityBadge = (role: string) => {
         switch (role) {
             case 'admin':
@@ -131,7 +129,7 @@ export default function UserManagement() {
             <div className="user-management-container">
                 <div className="loading-container">
                     <div className="loading-spinner"></div>
-                    <p className="loading-text">Loading users...</p>
+                    <p className="loading-text">Loading...</p>
                 </div>
             </div>
         );
@@ -143,12 +141,48 @@ export default function UserManagement() {
                 <div className="auth-message">
                     <FaUsers size={64} className="auth-icon" />
                     <h2>Authentication Required</h2>
-                    <p>Please sign in to view the user management page.</p>
+                    <p>Please sign in to access the user management page.</p>
                     <button
                         onClick={() => window.location.href = "/#/Account/Signin"}
                         className="btn-primary auth-btn"
                     >
                         Go to Sign In
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    if (!currentUser) {
+        return (
+            <div className="user-management-container">
+                <div className="auth-message">
+                    <FaUsers size={64} className="auth-icon" />
+                    <h2>Authentication Required</h2>
+                    <p>Please sign in to access the user management page.</p>
+                    <button
+                        onClick={() => window.location.href = "/#/Account/Signin"}
+                        className="btn-primary auth-btn"
+                    >
+                        Go to Sign In
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    if (currentUser.role !== 'admin') {
+        return (
+            <div className="user-management-container">
+                <div className="auth-message">
+                    <FaUsers size={64} className="auth-icon" />
+                    <h2>Access Denied</h2>
+                    <p>Only administrators can access the user management page.</p>
+                    <button
+                        onClick={() => window.location.href = "/#/home"}
+                        className="btn-primary auth-btn"
+                    >
+                        Go to Home
                     </button>
                 </div>
             </div>
@@ -165,8 +199,11 @@ export default function UserManagement() {
                         <div className="header-title-section">
                             <h1 className="page-title">
                                 <FaUsers className="title-icon" />
-                                Users
+                                User Management
                             </h1>
+                            <p className="page-subtitle">
+                                Manage users in the system (Admin Only)
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -216,23 +253,21 @@ export default function UserManagement() {
                                                     </div>
                                                 </div>
 
-                                                {/* Actions */}
-                                                {currentUser?.role === 'admin' && (
-                                                    <div className="user-actions">
-                                                        {user._id !== currentUser._id ? (
-                                                            <button
-                                                                onClick={() => confirmDelete(user)}
-                                                                className="delete-btn"
-                                                                title="Delete user"
-                                                            >
-                                                                <FaTrash />
-                                                                Delete
-                                                            </button>
-                                                        ) : (
-                                                            <span className="current-user-label">You</span>
-                                                        )}
-                                                    </div>
-                                                )}
+                                                {/* Actions - Always show for admin */}
+                                                <div className="user-actions">
+                                                    {user._id !== currentUser._id ? (
+                                                        <button
+                                                            onClick={() => confirmDelete(user)}
+                                                            className="delete-btn"
+                                                            title="Delete user"
+                                                        >
+                                                            <FaTrash />
+                                                            Delete
+                                                        </button>
+                                                    ) : (
+                                                        <span className="current-user-label">You</span>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
                                     ))}

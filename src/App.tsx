@@ -8,6 +8,8 @@ import BookInfo from "./Search/bookinfo";
 import { Provider } from "react-redux";
 import { store } from "./store";
 import UserManagement from "./UserManagement";
+import UserProfileList from "./UserProfileLink";
+
 
 export default function App() {
   return (
@@ -29,6 +31,7 @@ export default function App() {
           <Route path="/Account/Profile" element={<Profile />} />
           <Route path="/Account/Profile/:userId" element={<Profile />} />
           <Route path="/search" element={<Search />} />
+          <Route path="/users-list" element={<UserProfileList />} />
           <Route path="/users" element={<UserManagement />} />
           {/* Add the book details route */}
           <Route path="/details/:googleId" element={<BookInfo />} />

@@ -235,6 +235,18 @@
     color: #1565c0;
 }
 
+/* Clickable username style for UserProfileList */
+.clickable-username {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.clickable-username:hover {
+    color: #1976d2;
+    text-decoration: underline;
+    transform: translateX(2px);
+}
+
 /* Identity Badges - Matching Profile styles */
 .verified-badge-admin,
 .verified-badge-writer,
