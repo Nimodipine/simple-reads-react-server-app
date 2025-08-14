@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Container, Row, Col, Card, Table, Button, Modal, Alert, Badge } from 'react-bootstrap';
-import { FaUsers, FaTrash, FaEdit, FaEye } from 'react-icons/fa';
-import { FaShield } from 'react-icons/fa6';
+import { Button, Alert } from 'react-bootstrap';
+import { FaUsers, FaTrash } from 'react-icons/fa';
+import './UserManagement.css';
 
 const API_BASE_URL = (import.meta as any)?.env?.VITE_REMOTE_SERVER || "http://localhost:4000";
 
@@ -76,10 +76,9 @@ export default function UserManagement() {
     };
 
     useEffect(() => {
-        if (currentUser) {
-            fetchUsers();
-        }
-    }, [currentUser]);
+        // Always try to fetch users, regardless of authentication status
+        fetchUsers();
+    }, []);
 
     const handleDeleteUser = async (userId: string) => {
         try {
@@ -108,21 +107,17 @@ export default function UserManagement() {
         }
     };
 
-    const getRoleVariant = (role: string) => {
-        switch (role) {
-            case 'admin': return 'danger';
-            case 'writer': return 'primary';
-            case 'reader': return 'success';
-            default: return 'secondary';
-        }
-    };
 
-    const getRoleIcon = (role: string) => {
+
+    const getIdentityBadge = (role: string) => {
         switch (role) {
-            case 'admin': return <FaShield />;
-            case 'writer': return <FaEdit />;
-            case 'reader': return <FaEye />;
-            default: return <FaUsers />;
+            case 'admin':
+                return { text: '👑 Admin', class: 'verified-badge-admin' };
+            case 'writer':
+                return { text: '✏️ Writer', class: 'verified-badge-writer' };
+            case 'reader':
+            default:
+                return { text: '📖 Reader', class: 'verified-badge-reader' };
         }
     };
 
@@ -133,178 +128,169 @@ export default function UserManagement() {
 
     if (loading) {
         return (
-            <Container className="mt-5">
-                <Row className="justify-content-center">
-                    <Col md={6} className="text-center">
-                        <div className="spinner-border text-primary" role="status">
-                            <span className="visually-hidden">Loading...</span>
-                        </div>
-                        <p className="mt-3">Loading users...</p>
-                    </Col>
-                </Row>
-            </Container>
+            <div className="user-management-container">
+                <div className="loading-container">
+                    <div className="loading-spinner"></div>
+                    <p className="loading-text">Loading users...</p>
+                </div>
+            </div>
         );
     }
 
     if (error && error.includes('sign in')) {
         return (
-            <Container className="mt-5">
-                <Row className="justify-content-center">
-                    <Col md={8}>
-                        <Alert variant="warning" className="text-center">
-                            <FaUsers size={48} className="mb-3" />
-                            <h4>Authentication Required</h4>
-                            <p>Please sign in to view the user management page.</p>
-                            <Button variant="primary" href="/#/Account/Signin">
-                                Go to Sign In
-                            </Button>
-                        </Alert>
-                    </Col>
-                </Row>
-            </Container>
+            <div className="user-management-container">
+                <div className="auth-message">
+                    <FaUsers size={64} className="auth-icon" />
+                    <h2>Authentication Required</h2>
+                    <p>Please sign in to view the user management page.</p>
+                    <button
+                        onClick={() => window.location.href = "/#/Account/Signin"}
+                        className="btn-primary auth-btn"
+                    >
+                        Go to Sign In
+                    </button>
+                </div>
+            </div>
         );
     }
 
     return (
-        <Container fluid className="mt-4">
-            {/* Header */}
-            <Row className="mb-4">
-                <Col>
-                    <h1 className="display-5 fw-bold">
-                        <FaUsers className="me-3" />
-                        User Management
-                    </h1>
-                    <p className="text-muted">
-                        View all users in the system
-                        {currentUser && currentUser.role === 'admin' && ' (Admin: You can delete users)'}
-                        {currentUser && currentUser.role !== 'admin' && ' (View only)'}
-                        {!currentUser && ' (Please sign in for full access)'}
-                    </p>
-                </Col>
-            </Row>
+        <div className="user-management-container">
+            <div className="user-management-wrapper">
+                {/* Header */}
+                <div className="user-management-header">
+                    <div className="user-management-header-bg"></div>
+                    <div className="user-management-header-content">
+                        <div className="header-title-section">
+                            <h1 className="page-title">
+                                <FaUsers className="title-icon" />
+                                User Management
+                            </h1>
+                            <p className="page-subtitle">
+                                View all users in the system
+                                {currentUser && currentUser.role === 'admin' && ' (Admin: You can delete users)'}
+                                {currentUser && currentUser.role !== 'admin' && ' (View only)'}
+                                {!currentUser && ' (Please sign in for full access)'}
+                            </p>
+                        </div>
+                    </div>
+                </div>
 
-            {/* Users Table */}
-            <Row>
-                <Col>
-                    <Card>
-                        <Card.Body>
-                            {error && !error.includes('sign in') ? (
-                                <Alert variant="danger" className="text-center">
+                {/* Users Table */}
+                <div className="users-content">
+                    <div className="users-card">
+                        {error && !error.includes('sign in') ? (
+                            <div className="error-container">
+                                <Alert variant="danger" className="error-alert">
                                     <p>Error: {error}</p>
-                                    <Button variant="primary" onClick={fetchUsers}>
+                                    <Button variant="primary" onClick={fetchUsers} className="retry-btn">
                                         Retry
                                     </Button>
                                 </Alert>
-                            ) : users.length === 0 ? (
-                                <div className="text-center py-5">
-                                    <FaUsers size={64} className="text-muted mb-3" />
-                                    <p className="text-muted">No users found</p>
+                            </div>
+                        ) : users.length === 0 ? (
+                            <div className="no-users-container">
+                                <FaUsers size={64} className="no-users-icon" />
+                                <p className="no-users-text">No users found</p>
+                            </div>
+                        ) : (
+                            <div className="users-table-container">
+                                <div className="users-table-header">
+                                    <h3 className="table-title">All Users ({users.length})</h3>
                                 </div>
-                            ) : (
-                                <Table responsive striped hover>
-                                    <thead className="table-light">
-                                        <tr>
-                                            <th>User</th>
-                                            <th>Role</th>
-                                            <th>Email</th>
-                                            <th>Joined</th>
-                                            {currentUser?.role === 'admin' && <th>Actions</th>}
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {users.map((user) => (
-                                            <tr key={user._id}>
-                                                <td>
-                                                    <div className="d-flex align-items-center">
-                                                        <div
-                                                            className="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-3"
-                                                            style={{ width: '40px', height: '40px' }}
-                                                        >
-                                                            {user.username?.charAt(0)?.toUpperCase() || '?'}
-                                                        </div>
-                                                        <div>
-                                                            <div className="fw-bold">
-                                                                {user.username || 'Unknown'}
-                                                            </div>
-                                                            <small className="text-muted">
-                                                                ID: {user._id}
-                                                            </small>
+
+                                <div className="users-list">
+                                    {users.map((user) => (
+                                        <div key={user._id} className="user-item">
+                                            <div className="user-item-content">
+                                                {/* Avatar */}
+                                                <div className="user-avatar">
+                                                    {user.username?.charAt(0) || '?'}
+                                                </div>
+
+                                                {/* User Info */}
+                                                <div className="user-info">
+                                                    <div className="user-name-section">
+                                                        <h4 className="user-name">{user.username || 'Unknown'}</h4>
+                                                        <div className={getIdentityBadge(user.role).class}>
+                                                            {getIdentityBadge(user.role).text}
                                                         </div>
                                                     </div>
-                                                </td>
-                                                <td>
-                                                    <Badge
-                                                        bg={getRoleVariant(user.role)}
-                                                        className="d-flex align-items-center gap-1 w-auto"
-                                                        style={{ width: 'fit-content' }}
-                                                    >
-                                                        {getRoleIcon(user.role)}
-                                                        {user.role.toUpperCase()}
-                                                    </Badge>
-                                                </td>
-                                                <td>{user.email || 'No email'}</td>
-                                                <td>
-                                                    {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'Unknown'}
-                                                </td>
+                                                    <div className="user-id">
+                                                        ID: {user._id}
+                                                    </div>
+                                                </div>
+
+                                                {/* Actions */}
                                                 {currentUser?.role === 'admin' && (
-                                                    <td>
+                                                    <div className="user-actions">
                                                         {user._id !== currentUser._id ? (
-                                                            <Button
-                                                                variant="outline-danger"
-                                                                size="sm"
+                                                            <button
                                                                 onClick={() => confirmDelete(user)}
-                                                                className="d-flex align-items-center gap-1"
+                                                                className="delete-btn"
+                                                                title="Delete user"
                                                             >
                                                                 <FaTrash />
                                                                 Delete
-                                                            </Button>
+                                                            </button>
                                                         ) : (
-                                                            <span className="text-muted">You</span>
+                                                            <span className="current-user-label">You</span>
                                                         )}
-                                                    </td>
+                                                    </div>
                                                 )}
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </Table>
-                            )}
-                        </Card.Body>
-                    </Card>
-                </Col>
-            </Row>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
 
-            {/* Delete Confirmation Modal */}
-            <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered>
-                <Modal.Header closeButton>
-                    <Modal.Title className="d-flex align-items-center gap-2">
-                        <FaTrash className="text-danger" />
-                        Delete User
-                    </Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    {deleteConfirm && (
-                        <>
-                            <p>
-                                Are you sure you want to delete <strong>{deleteConfirm.username}</strong>?
-                            </p>
-                            <Alert variant="warning">
-                                <strong>Warning:</strong> This action cannot be undone.
-                            </Alert>
-                        </>
-                    )}
-                </Modal.Body>
-                <Modal.Footer>
-                    <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
-                        Cancel
-                    </Button>
-                    <Button
-                        variant="danger"
-                        onClick={() => deleteConfirm && handleDeleteUser(deleteConfirm._id)}
-                    >
-                        Delete User
-                    </Button>
-                </Modal.Footer>
-            </Modal>
-        </Container>
+                {/* Delete Confirmation Modal */}
+                {showDeleteModal && deleteConfirm && (
+                    <div className="modal-overlay">
+                        <div className="modal-content">
+                            <div className="modal-header">
+                                <div className="modal-icon">
+                                    <FaTrash />
+                                </div>
+                                <div className="modal-title-section">
+                                    <h3 className="modal-title">Delete User</h3>
+                                    <p className="modal-subtitle">This action cannot be undone</p>
+                                </div>
+                            </div>
+
+                            <div className="modal-body">
+                                <p className="confirm-text">
+                                    Are you sure you want to delete <strong>{deleteConfirm.username}</strong>?
+                                </p>
+                                <div className="warning-box">
+                                    <p className="warning-title">
+                                        <strong>Warning:</strong> This will permanently delete the user account.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="modal-footer">
+                                <button
+                                    onClick={() => setShowDeleteModal(false)}
+                                    className="btn-cancel"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={() => handleDeleteUser(deleteConfirm._id)}
+                                    className="btn-delete"
+                                >
+                                    Delete User
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
     );
 }
