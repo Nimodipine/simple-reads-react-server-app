@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button, Alert } from 'react-bootstrap';
-import { FaUsers, FaTrash, FaPlus, FaEdit } from 'react-icons/fa';
+import { FaUsers, FaTrash, FaPlus, FaEdit, FaHome } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
 import './UserManagement.css';
 
 const API_BASE_URL = (import.meta as any)?.env?.VITE_REMOTE_SERVER || "http://localhost:4000";
@@ -27,7 +28,9 @@ interface UserFormData {
 }
 
 export default function UserManagement() {
+    const navigate = useNavigate();
     const [users, setUsers] = useState<User[]>([]);
+    const [allUsers, setAllUsers] = useState<User[]>([]); // Store all users for filtering
     const [, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -70,16 +73,12 @@ export default function UserManagement() {
         }
     };
 
-    const fetchUsers = async (search?: string) => {
+    const fetchUsers = async () => {
         try {
             setLoading(true);
             setError(''); // Clear any previous errors
 
-            const url = search
-                ? `${API_BASE_URL}/api/users?search=${encodeURIComponent(search)}`
-                : `${API_BASE_URL}/api/users`;
-
-            const response = await fetch(url, {
+            const response = await fetch(`${API_BASE_URL}/api/users`, {
                 credentials: 'include'
             });
 
@@ -91,6 +90,7 @@ export default function UserManagement() {
             }
 
             const users = await response.json();
+            setAllUsers(users);
             setUsers(users);
         } catch (err: any) {
             setError(err.message);
@@ -246,18 +246,22 @@ export default function UserManagement() {
         setShowDeleteModal(true);
     };
 
-    const handleSearch = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
         setSearchTerm(value);
 
-        // Immediate search like the Users.tsx component
+        // Filter users locally based on search term
         if (value.trim()) {
-            await fetchUsers(value.trim());
+            const filteredUsers = allUsers.filter(user =>
+                user.username.toLowerCase().includes(value.toLowerCase()) ||
+                user.email.toLowerCase().includes(value.toLowerCase()) ||
+                user.role.toLowerCase().includes(value.toLowerCase())
+            );
+            setUsers(filteredUsers);
         } else {
-            await fetchUsers();
+            setUsers(allUsers);
         }
     };
-
 
     if (error && error.includes('sign in')) {
         return (
@@ -321,10 +325,20 @@ export default function UserManagement() {
                     <div className="user-management-header-bg"></div>
                     <div className="user-management-header-content">
                         <div className="header-title-section">
-                            <h1 className="page-title">
-                                <FaUsers className="title-icon" />
-                                User Management
-                            </h1>
+                            <div className="header-title-row">
+                                <Button
+                                    variant="outline-light"
+                                    className="header-home-btn"
+                                    onClick={() => navigate('/home')}
+                                    title="Go to Home"
+                                >
+                                    <FaHome />
+                                </Button>
+                                <h1 className="page-title">
+                                    <FaUsers className="title-icon" />
+                                    User Management
+                                </h1>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -332,44 +346,51 @@ export default function UserManagement() {
                 {/* Users Table */}
                 <div className="users-content">
                     <div className="users-card">
-                        {error && !error.includes('sign in') ? (
-                            <div className="error-container">
-                                <Alert variant="danger" className="error-alert">
-                                    <p>Error: {error}</p>
-                                    <Button variant="primary" onClick={() => fetchUsers()} className="retry-btn">
-                                        Retry
-                                    </Button>
-                                </Alert>
-                            </div>
-                        ) : users.length === 0 ? (
-                            <div className="no-users-container">
-                                <FaUsers size={64} className="no-users-icon" />
-                                <p className="no-users-text">No users found</p>
-                            </div>
-                        ) : (
-                            <div className="users-table-container">
-                                <div className="users-table-header">
-                                    <h3 className="table-title">All Users ({users.length})</h3>
-                                    <div className="table-actions">
-                                        <div className="search-container">
-                                            <input
-                                                type="text"
-                                                placeholder="Search users..."
-                                                value={searchTerm}
-                                                onChange={handleSearch}
-                                                className="search-input"
-                                            />
-                                        </div>
-                                        <button
-                                            onClick={openAddModal}
-                                            className="add-user-btn"
-                                        >
-                                            <FaPlus />
-                                            Add User
-                                        </button>
+                        <div className="users-table-container">
+                            <div className="users-table-header">
+                                <h3 className="table-title">All Users ({users.length})</h3>
+                                <div className="table-actions">
+                                    <div className="search-container">
+                                        <input
+                                            type="text"
+                                            placeholder="Search users..."
+                                            value={searchTerm}
+                                            onChange={handleSearch}
+                                            className="search-input"
+                                        />
                                     </div>
+                                    <button
+                                        onClick={openAddModal}
+                                        className="add-user-btn"
+                                    >
+                                        <FaPlus />
+                                        Add User
+                                    </button>
                                 </div>
+                            </div>
 
+                            {error && !error.includes('sign in') ? (
+                                <div className="error-container">
+                                    <Alert variant="danger" className="error-alert">
+                                        <p>Error: {error}</p>
+                                        <Button variant="primary" onClick={() => fetchUsers()} className="retry-btn">
+                                            Retry
+                                        </Button>
+                                    </Alert>
+                                </div>
+                            ) : users.length === 0 ? (
+                                <div className="no-users-container">
+                                    <FaUsers size={64} className="no-users-icon" />
+                                    <p className="no-users-text">
+                                        {searchTerm ? `No users found matching "${searchTerm}"` : 'No users found'}
+                                    </p>
+                                    {searchTerm && (
+                                        <p className="no-users-subtext">
+                                            Try adjusting your search terms or clear the search to see all users.
+                                        </p>
+                                    )}
+                                </div>
+                            ) : (
                                 <div className="users-list">
                                     {users.map((user) => (
                                         <div key={user._id} className="user-item">
@@ -421,8 +442,8 @@ export default function UserManagement() {
                                         </div>
                                     ))}
                                 </div>
-                            </div>
-                        )}
+                            )}
+                        </div>
                     </div>
                 </div>
 

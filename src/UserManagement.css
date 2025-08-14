@@ -39,7 +39,34 @@
 }
 
 .header-title-section {
+    position: relative;
     text-align: center;
+    /* center the title text */
+}
+
+.header-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* <-- center the row content */
+    gap: 1rem;
+    width: 100%;
+    padding-left: 56px;
+    /* <-- reserve space for the absolute Home btn */
+}
+
+.header-home-btn {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 40px;
+    width: 40px;
+    border-radius: 50%;
+    padding: 0;
 }
 
 .page-title {

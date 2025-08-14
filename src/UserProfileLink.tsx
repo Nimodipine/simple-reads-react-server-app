@@ -23,7 +23,7 @@ export default function UserProfileList() {
     const navigate = useNavigate();
     const [users, setUsers] = useState<User[]>([]);
     const [allUsers, setAllUsers] = useState<User[]>([]);
-    const [, setLoading] = useState(true);
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
 
@@ -59,12 +59,12 @@ export default function UserProfileList() {
     const getIdentityBadge = (role: string) => {
         switch (role) {
             case 'admin':
-                return { text: '👑 Admin', class: 'verified-badge-admin' };
+                return { text: '👑 Admin', className: 'verified-badge-admin' };
             case 'writer':
-                return { text: '✍️ Writer', class: 'verified-badge-writer' };
+                return { text: '✏️ Writer', className: 'verified-badge-writer' };
             case 'reader':
             default:
-                return { text: '📖 Reader', class: 'verified-badge-reader' };
+                return { text: '📖 Reader', className: 'verified-badge-reader' };
         }
     };
 
@@ -88,40 +88,40 @@ export default function UserProfileList() {
         }
     };
 
+    if (loading) {
+        return (
+            <div className="user-management-container">
+                <div className="user-management-wrapper">
+                    <div className="loading-container">
+                        <div className="loading-spinner"></div>
+                        <p>Loading users...</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="user-management-container">
-            <Button
-                variant="outline-primary"
-                className="home-btn"
-                onClick={() => navigate('/home')}
-                style={{
-                    position: 'absolute',
-                    top: '20px',
-                    left: '20px',
-                    zIndex: 1000,
-                    borderRadius: '50%',
-                    width: '50px',
-                    height: '50px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginTop: '10px',
-                    marginLeft: '10px'
-                }}
-                title="Go to Home"
-            >
-                <FaHome style={{ fontSize: '18px' }} />
-            </Button>
-
             <div className="user-management-wrapper">
                 <div className="user-management-header">
                     <div className="user-management-header-bg"></div>
                     <div className="user-management-header-content">
                         <div className="header-title-section">
-                            <h1 className="page-title">
-                                <FaUsers className="title-icon" />
-                                User Profiles
-                            </h1>
+                            <div className="header-title-row">
+                                <Button
+                                    variant="outline-light"
+                                    className="header-home-btn"
+                                    onClick={() => navigate('/home')}
+                                    title="Go to Home"
+                                >
+                                    <FaHome />
+                                </Button>
+                                <h1 className="page-title">
+                                    <FaUsers className="title-icon" />
+                                    User Profiles
+                                </h1>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -164,9 +164,7 @@ export default function UserProfileList() {
                                         {searchTerm ? `No users found matching "${searchTerm}"` : 'No users found'}
                                     </p>
                                     <p className="no-users-subtext">
-                                        {searchTerm
-                                            ? 'Try adjusting your search terms or clear the search to see all users.'
-                                            : 'Be the first to join our community!'}
+                                        {searchTerm ? 'Try adjusting your search terms or clear the search to see all users.' : 'Be the first to join our community!'}
                                     </p>
                                 </div>
                             ) : (
@@ -175,17 +173,25 @@ export default function UserProfileList() {
                                         <div key={user._id} className="user-item">
                                             <div className="user-item-content">
                                                 <div className="user-avatar">
-                                                    {user.username?.charAt(0) || '?'}
+                                                    {user.username?.charAt(0)?.toUpperCase() || '?'}
                                                 </div>
                                                 <div className="user-info">
                                                     <div className="user-name-section">
                                                         <h4
                                                             className="user-name clickable-username"
                                                             onClick={() => navigateToUserProfile(user._id)}
+                                                            role="button"
+                                                            tabIndex={0}
+                                                            onKeyDown={(e) => {
+                                                                if (e.key === 'Enter' || e.key === ' ') {
+                                                                    e.preventDefault();
+                                                                    navigateToUserProfile(user._id);
+                                                                }
+                                                            }}
                                                         >
                                                             {user.username || 'Unknown'}
                                                         </h4>
-                                                        <div className={getIdentityBadge(user.role).class}>
+                                                        <div className={getIdentityBadge(user.role).className}>
                                                             {getIdentityBadge(user.role).text}
                                                         </div>
                                                     </div>
