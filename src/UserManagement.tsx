@@ -165,14 +165,8 @@ export default function UserManagement() {
                         <div className="header-title-section">
                             <h1 className="page-title">
                                 <FaUsers className="title-icon" />
-                                User Management
+                                Users
                             </h1>
-                            <p className="page-subtitle">
-                                View all users in the system
-                                {currentUser && currentUser.role === 'admin' && ' (Admin: You can delete users)'}
-                                {currentUser && currentUser.role !== 'admin' && ' (View only)'}
-                                {!currentUser && ' (Please sign in for full access)'}
-                            </p>
                         </div>
                     </div>
                 </div>
