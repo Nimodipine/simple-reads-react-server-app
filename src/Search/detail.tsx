@@ -189,6 +189,10 @@ const BookDetails: React.FC = () => {
                     variant="outline-primary"
                     onClick={handleBackNavigation}
                     className="mb-4"
+                    style={{
+                        marginTop: '10px',
+                        marginLeft: '10px'
+                    }}
                 >
                     <FaArrowLeft className="me-2" />
                     Back to Results

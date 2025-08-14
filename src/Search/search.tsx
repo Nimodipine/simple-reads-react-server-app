@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Form, Card } from 'react-bootstrap';
-import { FaSearch, FaTimes, FaStar } from 'react-icons/fa';
+import { Container, Row, Col, Form, Card, Button } from 'react-bootstrap';
+import { FaSearch, FaTimes, FaStar, FaHome } from 'react-icons/fa';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import './search.css';
 
@@ -94,7 +94,7 @@ export default function Search() {
 
             if (!res.ok) {
                 const msg = await res.text();
-                throw new Error(`HTTP ${res.status} — ${msg.slice(0, 120)}`);
+                throw new Error(`HTTP ${res.status} – ${msg.slice(0, 120)}`);
             }
             if (!contentType.includes("application/json")) {
                 const body = await res.text();
@@ -177,6 +177,30 @@ export default function Search() {
 
     return (
         <div className="search-page">
+            {/* Home Button */}
+            <Button
+                variant="outline-primary"
+                className="home-btn"
+                onClick={() => navigate('/home')}
+                style={{
+                    position: 'absolute',
+                    top: '20px',
+                    left: '20px',
+                    zIndex: 1000,
+                    borderRadius: '50%',
+                    width: '50px',
+                    height: '50px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginTop: '10px',
+                    marginLeft: '10px'
+                }}
+                title="Go to Home"
+            >
+                <FaHome style={{ fontSize: '50px' }} />
+            </Button>
+
             <Container fluid className="search-container">
                 <Row className="justify-content-center">
                     <Col xs={12} lg={10} xl={8}>
