@@ -39,7 +39,6 @@ interface Book {
     authors: string[];
     thumbnail?: string;
     categories?: string[];
-    internalRating?: number;
     internalRatingsCount?: number;
     viewCount?: number;
     favoriteCount?: number;
@@ -470,17 +469,6 @@ export default function Home({
                                                                 <p className="book-author">
                                                                     by {book.authors.join(", ")}
                                                                 </p>
-                                                                {book.internalRating &&
-                                                                    book.internalRating > 0 && (
-                                                                        <div className="book-rating">
-                                                                            {renderStars(
-                                                                                Math.round(book.internalRating)
-                                                                            )}
-                                                                            <span className="rating-text">
-                                                                                ({book.internalRatingsCount || 0})
-                                                                            </span>
-                                                                        </div>
-                                                                    )}
                                                             </Card.Body>
                                                         </Card>
                                                     </div>

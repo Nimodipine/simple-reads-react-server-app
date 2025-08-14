@@ -19,7 +19,6 @@ interface Book {
     isbn?: string;
     googleRating?: number;
     googleRatingsCount?: number;
-    internalRating?: number;
     internalRatingsCount?: number;
     viewCount?: number;
     favoriteCount?: number;
