@@ -912,6 +912,8 @@ const BookInfo: React.FC = () => {
                     </section>
                 ) : null}
 
+// In your bookinfo.tsx file, update the All Reviews Section around line 800+
+
                 {/* All Reviews Section */}
                 <section className="reviews-card">
                     <div className="reviews-header p-3">
@@ -968,6 +970,49 @@ const BookInfo: React.FC = () => {
                                                     </div>
                                                     <div className="review-actions">
                                                         {renderStars(review.rating, undefined, false)}
+                                                        {/* Show delete button for writers or review owners */}
+                                                        {currentUser && (
+                                                            currentUser.role === "writer" ||
+                                                            review.user._id === currentUser._id
+                                                        ) && (
+                                                                <div className="user-actions ms-2">
+                                                                    <Button
+                                                                        variant="outline-danger"
+                                                                        size="sm"
+                                                                        onClick={async () => {
+                                                                            const confirmMessage = review.user._id === currentUser._id
+                                                                                ? "Delete your review?"
+                                                                                : `Delete review by @${review.user.username}?`;
+
+                                                                            if (!confirm(confirmMessage)) return;
+
+                                                                            try {
+                                                                                const res = await fetch(
+                                                                                    `${API_BASE_URL}/api/reviews/${review._id}`,
+                                                                                    {
+                                                                                        method: "DELETE",
+                                                                                        credentials: "include",
+                                                                                    }
+                                                                                );
+                                                                                if (res.ok) {
+                                                                                    fetchBookReviews();
+                                                                                    fetchBookDetails();
+                                                                                } else {
+                                                                                    const d = await res.json();
+                                                                                    alert(d.message || "Error deleting review");
+                                                                                }
+                                                                            } catch (e) {
+                                                                                alert("Error deleting review");
+                                                                            }
+                                                                        }}
+                                                                        title={review.user._id === currentUser._id
+                                                                            ? "Delete your review"
+                                                                            : "Delete this review (Writer privilege)"}
+                                                                    >
+                                                                        <FaTrash />
+                                                                    </Button>
+                                                                </div>
+                                                            )}
                                                     </div>
                                                 </div>
                                                 <div className="review-content">
