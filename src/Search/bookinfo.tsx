@@ -912,8 +912,6 @@ const BookInfo: React.FC = () => {
                     </section>
                 ) : null}
 
-// In your bookinfo.tsx file, update the All Reviews Section around line 800+
-
                 {/* All Reviews Section */}
                 <section className="reviews-card">
                     <div className="reviews-header p-3">
