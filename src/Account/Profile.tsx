@@ -718,9 +718,6 @@ const ProfileHome = () => {
                                                             Added: {formatDate(favorite.addedAt)}
                                                         </span>
                                                     </div>
-                                                    <h4 className="content-detail-title">
-                                                        {bookTitles[favorite.book] || "Favorite Book"}
-                                                    </h4>
                                                 </div>
                                                 <p className="content-detail-snippet">
                                                     Click to view book details
