@@ -534,11 +534,11 @@ const BookInfo: React.FC = () => {
                         {error ||
                             "The book you're looking for doesn't exist or has been removed."}
                     </p>
-                    <div className="mt-3 d-flex gap-3">
+                    <div className="mt-3">
                         <Button
                             variant="outline-danger"
                             onClick={() => navigate("/Account/Profile")}
-                            className="me-2"
+                            style={{ marginRight: '1rem' }}
                         >
                             <FaArrowLeft className="me-2" />
                             Back to Profile
