@@ -3,8 +3,8 @@ import { Button, Alert } from 'react-bootstrap';
 import { FaUsers, FaTrash, FaPlus, FaEdit, FaHome, FaUser } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import './UserManagement.css';
+import axiosWithCredentials from './client';
 
-const API_BASE_URL = (import.meta as any)?.env?.VITE_REMOTE_SERVER || "http://localhost:4000";
 
 interface User {
     _id: string;
@@ -52,101 +52,62 @@ export default function UserManagement() {
         fetchCurrentUser();
     }, []);
 
+
+    // Replace the fetchCurrentUser function:
     const fetchCurrentUser = async () => {
         try {
-            const response = await fetch(`${API_BASE_URL}/api/profile`, {
-                credentials: 'include'
-            });
-            if (response.ok) {
-                const user = await response.json();
-                setCurrentUser(user);
-            } else if (response.status === 401) {
-                // User is not authenticated
+            const response = await axiosWithCredentials.get('/api/profile');
+            setCurrentUser(response.data);
+        } catch (error: any) {
+            if (error.response?.status === 401) {
                 setCurrentUser(null);
                 setError('Please sign in to view this page');
             } else {
-                throw new Error('Failed to fetch user profile');
+                console.error('Error fetching current user:', error);
+                setError('Failed to load user profile');
             }
-        } catch (error) {
-            console.error('Error fetching current user:', error);
-            setError('Failed to load user profile');
         }
     };
 
+    // Replace the fetchUsers function:
     const fetchUsers = async () => {
         try {
             setLoading(true);
-            setError(''); // Clear any previous errors
+            setError('');
 
-            const response = await fetch(`${API_BASE_URL}/api/users`, {
-                credentials: 'include'
-            });
-
-            if (!response.ok) {
-                if (response.status === 401) {
-                    throw new Error('Please sign in to view users');
-                }
-                throw new Error('Failed to fetch users');
+            const response = await axiosWithCredentials.get('/api/users');
+            setAllUsers(response.data);
+            setUsers(response.data);
+        } catch (error: any) {
+            if (error.response?.status === 401) {
+                setError('Please sign in to view users');
+            } else {
+                setError(error.response?.data?.message || 'Failed to fetch users');
             }
-
-            const users = await response.json();
-            setAllUsers(users);
-            setUsers(users);
-        } catch (err: any) {
-            setError(err.message);
         } finally {
             setLoading(false);
         }
     };
 
-    useEffect(() => {
-        // Always try to fetch users, regardless of authentication status
-        fetchUsers();
-    }, []);
-
+    // Replace the handleDeleteUser function:
     const handleDeleteUser = async (userId: string) => {
         try {
-            const response = await fetch(`${API_BASE_URL}/api/admin/users/${userId}`, {
-                method: 'DELETE',
-                credentials: 'include'
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Failed to delete user');
-            }
-
-            const result = await response.json();
-
-            alert(`User deleted successfully: ${result.message}`);
-
-            // Refresh user list
+            const response = await axiosWithCredentials.delete(`/api/admin/users/${userId}`);
+            alert(`User deleted successfully: ${response.data.message}`);
             fetchUsers();
-
-        } catch (err: any) {
-            alert(`Error deleting user: ${err.message}`);
+        } catch (error: any) {
+            const errorMessage = error.response?.data?.message || 'Failed to delete user';
+            alert(`Error deleting user: ${errorMessage}`);
         } finally {
             setDeleteConfirm(null);
             setShowDeleteModal(false);
         }
     };
 
+    // Replace the handleAddUser function:
     const handleAddUser = async () => {
         try {
-            const response = await fetch(`${API_BASE_URL}/api/users/signup`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                credentials: 'include',
-                body: JSON.stringify(userForm)
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Failed to create user');
-            }
-
+            await axiosWithCredentials.post('/api/users/signup', userForm);
             alert('User created successfully!');
 
             // Reset form and close modal
@@ -158,33 +119,19 @@ export default function UserManagement() {
                 bio: ''
             });
             setShowAddModal(false);
-
-            // Refresh user list
             fetchUsers();
-
-        } catch (err: any) {
-            alert(`Error creating user: ${err.message}`);
+        } catch (error: any) {
+            const errorMessage = error.response?.data?.message || 'Failed to create user';
+            alert(`Error creating user: ${errorMessage}`);
         }
     };
 
+    // Replace the handleEditUser function:
     const handleEditUser = async () => {
         if (!editingUser) return;
 
         try {
-            const response = await fetch(`${API_BASE_URL}/api/admin/users/${editingUser._id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                credentials: 'include',
-                body: JSON.stringify(userForm)
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Failed to update user');
-            }
-
+            await axiosWithCredentials.put(`/api/admin/users/${editingUser._id}`, userForm);
             alert('User updated successfully!');
 
             // Reset form and close modal
@@ -197,12 +144,10 @@ export default function UserManagement() {
             });
             setShowEditModal(false);
             setEditingUser(null);
-
-            // Refresh user list
             fetchUsers();
-
-        } catch (err: any) {
-            alert(`Error updating user: ${err.message}`);
+        } catch (error: any) {
+            const errorMessage = error.response?.data?.message || 'Failed to update user';
+            alert(`Error updating user: ${errorMessage}`);
         }
     };
 

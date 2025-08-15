@@ -3,10 +3,9 @@ import { Link, useNavigate } from "react-router-dom";
 import { FormControl, Button } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { setCurrentUser, setLoading, setError, clearError } from "./reducer";
+import axiosWithCredentials from "../client";
 import type { RootState, AppDispatch } from "../store";
 import "./auth.css";
-
-const API_BASE_URL = import.meta.env.VITE_REMOTE_SERVER || 'http://localhost:4000';
 
 interface SignupForm {
     username?: string;
@@ -65,37 +64,27 @@ export default function Signup() {
         dispatch(clearError());
 
         try {
-            const response = await fetch(`${API_BASE_URL}/api/users/signup`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                credentials: 'include',
-                body: JSON.stringify({
-                    username: user.username,
-                    email: user.email,
-                    password: user.password,
-                    role: user.identity, // Map identity to role for backend
-                }),
+            const response = await axiosWithCredentials.post('/api/users/signup', {
+                username: user.username,
+                email: user.email,
+                password: user.password,
+                role: user.identity, // Map identity to role for backend
             });
 
-            if (response.ok) {
-                const userData = await response.json();
-                console.log("Registration successful", userData);
+            console.log("Registration successful", response.data);
+            dispatch(setCurrentUser(response.data));
+            navigate('/home');
 
-                // Update Redux store with user data
-                dispatch(setCurrentUser(userData));
-
-                // Navigate to home or dashboard
-                navigate('/home');
-            } else {
-                const error = await response.json();
-                dispatch(setError(error.message || 'Registration failed'));
-                setErrors({ general: error.message || 'Registration failed' });
-            }
-        } catch (error) {
+        } catch (error: any) {
             console.error("Registration error:", error);
-            const errorMessage = 'Network error. Please try again.';
+
+            let errorMessage = 'Registration failed';
+            if (error.response?.data?.message) {
+                errorMessage = error.response.data.message;
+            } else if (error.code === 'NETWORK_ERROR') {
+                errorMessage = 'Network error. Please try again.';
+            }
+
             dispatch(setError(errorMessage));
             setErrors({ general: errorMessage });
         } finally {

@@ -5,8 +5,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { setCurrentUser, setLoading, setError, clearError } from "./reducer";
 import "./auth.css";
 import type { AppDispatch, RootState } from "../store";
+import axiosWithCredentials from '../client';
 
-const API_BASE_URL = import.meta.env.VITE_REMOTE_SERVER || 'http://localhost:4000';
 
 export default function Signin() {
     const [credentials, setCredentials] = useState<{ username?: string; password?: string }>({});
@@ -45,63 +45,36 @@ export default function Signin() {
         dispatch(clearError());
 
         try {
-            console.log('Attempting to signin with:', credentials.username); // Debug log
+            console.log('Attempting to signin with:', credentials.username);
 
-            const response = await fetch(`${API_BASE_URL}/api/users/signin`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                credentials: 'include',
-                body: JSON.stringify({
-                    username: credentials.username,
-                    password: credentials.password,
-                }),
+            const response = await axiosWithCredentials.post('/api/users/signin', {
+                username: credentials.username,
+                password: credentials.password,
             });
 
-            console.log('Response status:', response.status); // Debug log
-            console.log('Response headers:', response.headers); // Debug log
+            console.log("Sign in successful", response.data);
+            dispatch(setCurrentUser(response.data));
 
-            if (response.ok) {
-                const userData = await response.json();
-                console.log("Sign in successful", userData);
-
-                // Update Redux store with user data
-                dispatch(setCurrentUser(userData));
-
-                // Navigate back to the book page if returnTo exists, otherwise go to home
-                if (returnTo) {
-                    console.log('Redirecting back to:', returnTo);
-                    navigate(returnTo);
-                } else {
-                    navigate('/home');
-                }
+            // Navigate back to the book page if returnTo exists, otherwise go to home
+            if (returnTo) {
+                console.log('Redirecting back to:', returnTo);
+                navigate(returnTo);
             } else {
-                // Check if response has JSON content
-                const contentType = response.headers.get('content-type');
-                let errorMessage = 'Sign in failed';
-
-                if (contentType && contentType.includes('application/json')) {
-                    try {
-                        const errorData = await response.json();
-                        errorMessage = errorData.message || 'Sign in failed';
-                    } catch (jsonError) {
-                        console.error('Failed to parse error JSON:', jsonError);
-                        errorMessage = `Server error (${response.status})`;
-                    }
-                } else {
-                    // Response is not JSON (likely HTML error page)
-                    const textResponse = await response.text();
-                    console.log('Non-JSON response:', textResponse);
-                    errorMessage = `Server error (${response.status}): Endpoint not found`;
-                }
-
-                dispatch(setError(errorMessage));
-                setErrors({ general: errorMessage });
+                navigate('/home');
             }
-        } catch (error) {
+
+        } catch (error: any) {
             console.error("Sign in error:", error);
-            const errorMessage = 'Network error. Please check if the server is running.';
+
+            let errorMessage = 'Sign in failed';
+            if (error.response?.data?.message) {
+                errorMessage = error.response.data.message;
+            } else if (error.response?.status === 401) {
+                errorMessage = 'Invalid username or password';
+            } else if (error.code === 'NETWORK_ERROR') {
+                errorMessage = 'Network error. Please check if the server is running.';
+            }
+
             dispatch(setError(errorMessage));
             setErrors({ general: errorMessage });
         } finally {

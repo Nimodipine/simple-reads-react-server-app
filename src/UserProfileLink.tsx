@@ -2,9 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaUsers, FaHome, FaUser } from 'react-icons/fa';
 import { Button } from 'react-bootstrap';
+import axiosWithCredentials from './client';
 import './UserManagement.css';
-
-const API_BASE_URL = (import.meta as any)?.env?.VITE_REMOTE_SERVER || "http://localhost:4000";
 
 interface User {
     _id: string;
@@ -36,21 +35,18 @@ export default function UserProfileList() {
             setLoading(true);
             setError('');
 
-            const response = await fetch(`${API_BASE_URL}/api/users`);
+            const response = await axiosWithCredentials.get('/api/users');
+            setAllUsers(response.data);
+            setUsers(response.data);
 
-            if (!response.ok) {
-                if (response.status === 401) {
-                    throw new Error('Unable to load users at this time');
-                }
-                throw new Error('Failed to fetch users');
+        } catch (error: any) {
+            console.error('Error fetching users:', error);
+
+            if (error.response?.status === 401) {
+                setError('Unable to load users at this time');
+            } else {
+                setError(error.response?.data?.message || 'Failed to fetch users');
             }
-
-            const users = await response.json();
-            setAllUsers(users);
-            setUsers(users);
-        } catch (err: any) {
-            console.error('Error fetching users:', err);
-            setError(err.message);
         } finally {
             setLoading(false);
         }
@@ -61,7 +57,7 @@ export default function UserProfileList() {
             case 'admin':
                 return { text: '👑 Admin', className: 'verified-badge-admin' };
             case 'writer':
-                return { text: '✍️ Writer', className: 'verified-badge-writer' };
+                return { text: '✏️ Writer', className: 'verified-badge-writer' };
             case 'reader':
             default:
                 return { text: '📖 Reader', className: 'verified-badge-reader' };

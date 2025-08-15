@@ -2,6 +2,7 @@ import { Button, Navbar } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { setCurrentUser } from "./Account/reducer";
+import axiosWithCredentials from "./client";
 import type { AppDispatch } from "./store";
 
 export interface HeaderProps {
@@ -13,9 +14,6 @@ export interface HeaderProps {
     };
 }
 
-const API_BASE_URL =
-    import.meta.env.VITE_REMOTE_SERVER || "http://localhost:4000";
-
 export default function Header({ isLoggedIn, user }: HeaderProps) {
     const navigate = useNavigate();
     const dispatch = useDispatch<AppDispatch>();
@@ -23,27 +21,17 @@ export default function Header({ isLoggedIn, user }: HeaderProps) {
     const handleSignOut = async () => {
         try {
             // Call the backend signout endpoint
-            const response = await fetch(`${API_BASE_URL}/api/users/signout`, {
-                method: "POST",
-                credentials: "include",
-            });
+            await axiosWithCredentials.post('/api/users/signout');
 
-            if (response.ok || response.status === 500) {
-                // Clear Redux state regardless of response
-                // (session might already be expired)
-                dispatch(setCurrentUser(null));
+            // Clear Redux state
+            dispatch(setCurrentUser(null));
+            navigate("/home");
 
-                // Navigate to home page after signout
-                navigate("/home");
-            } else {
-                console.error("Signout failed with status:", response.status);
-                // Still clear local state even if server call fails
-                dispatch(setCurrentUser(null));
-                navigate("/home");
-            }
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error during signout:", error);
+
             // Clear local state even on network error
+            // (session might already be expired)
             dispatch(setCurrentUser(null));
             navigate("/home");
         }

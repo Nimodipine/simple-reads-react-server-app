@@ -2,10 +2,8 @@ import { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
 import { setCurrentUser, setLoading, setError } from "./reducer";
+import axiosWithCredentials from "../client";
 import "./profile.css";
-
-const API_BASE_URL =
-    import.meta.env.VITE_REMOTE_SERVER || "http://localhost:4000";
 
 type EditForm = {
     email: string;
@@ -115,34 +113,24 @@ const ProfileHome = () => {
         ].filter((id) => id && !bookTitles[id]);
 
         // Fetch missing titles
-        googleIds.forEach((googleId) => {
-            fetch(`${API_BASE_URL}/api/books/${googleId}`)
-                .then((res) => (res.ok ? res.json() : null))
-                .then((data) => {
-                    if (data && data.success && data.book && data.book.title) {
-                        setBookTitles((prev) => ({ ...prev, [googleId]: data.book.title }));
-                    } else {
-                        setBookTitles((prev) => ({ ...prev, [googleId]: "Unknown Book" }));
-                    }
-                })
-                .catch(() => {
+        googleIds.forEach(async (googleId) => {
+            try {
+                const response = await axiosWithCredentials.get(`/api/books/${googleId}`);
+                if (response.data && response.data.success && response.data.book && response.data.book.title) {
+                    setBookTitles((prev) => ({ ...prev, [googleId]: response.data.book.title }));
+                } else {
                     setBookTitles((prev) => ({ ...prev, [googleId]: "Unknown Book" }));
-                });
+                }
+            } catch (error) {
+                setBookTitles((prev) => ({ ...prev, [googleId]: "Unknown Book" }));
+            }
         });
     }, [favorites, reviews]);
 
     const checkFollowStatus = async (viewingUserId: string) => {
         try {
-            const response = await fetch(
-                `${API_BASE_URL}/api/follow/status/${viewingUserId}`,
-                {
-                    credentials: "include",
-                }
-            );
-            if (response.ok) {
-                const { isFollowing } = await response.json();
-                setIsFollowing(isFollowing);
-            }
+            const response = await axiosWithCredentials.get(`/api/follow/status/${viewingUserId}`);
+            setIsFollowing(response.data.isFollowing);
         } catch (error) {
             console.error("Error checking follow status:", error);
         }
@@ -158,14 +146,8 @@ const ProfileHome = () => {
                     bio: currentUser.bio || "",
                 });
             } else {
-                const response = await fetch(
-                    `${API_BASE_URL}/api/profile/${viewingUserId}`,
-                    { credentials: "include" }
-                );
-                if (response.ok) {
-                    const userData = await response.json();
-                    setProfileUser(userData);
-                }
+                const response = await axiosWithCredentials.get(`/api/profile/${viewingUserId}`);
+                setProfileUser(response.data);
             }
         } catch (error) {
             console.error("Error fetching user profile:", error);
@@ -200,7 +182,7 @@ const ProfileHome = () => {
         try {
             dispatch(setLoading(true));
 
-            // Use the correct endpoints that exist in routes.js
+            // Use Promise.all with axios
             const [
                 followersCountRes,
                 followingCountRes,
@@ -209,61 +191,27 @@ const ProfileHome = () => {
                 reviewsRes,
                 favoritesRes,
             ] = await Promise.all([
-                fetch(`${API_BASE_URL}/api/profile/${viewingUserId}/followers/count`, {
-                    credentials: "include",
-                }),
-                fetch(`${API_BASE_URL}/api/profile/${viewingUserId}/following/count`, {
-                    credentials: "include",
-                }),
-                fetch(`${API_BASE_URL}/api/profile/${viewingUserId}/followers`, {
-                    credentials: "include",
-                }),
-                fetch(`${API_BASE_URL}/api/profile/${viewingUserId}/following`, {
-                    credentials: "include",
-                }),
-                fetch(`${API_BASE_URL}/api/profile/${viewingUserId}/reviews`, {
-                    credentials: "include",
-                }),
-                fetch(`${API_BASE_URL}/api/favorites/user/${viewingUserId}`, {
-                    credentials: "include",
-                }),
+                axiosWithCredentials.get(`/api/profile/${viewingUserId}/followers/count`),
+                axiosWithCredentials.get(`/api/profile/${viewingUserId}/following/count`),
+                axiosWithCredentials.get(`/api/profile/${viewingUserId}/followers`),
+                axiosWithCredentials.get(`/api/profile/${viewingUserId}/following`),
+                axiosWithCredentials.get(`/api/profile/${viewingUserId}/reviews`),
+                axiosWithCredentials.get(`/api/favorites/user/${viewingUserId}`),
             ]);
 
             // Handle follow stats - combine the count responses
-            const followStats = { followersCount: 0, followingCount: 0 };
-
-            if (followersCountRes.ok) {
-                const { followerCount } = await followersCountRes.json();
-                followStats.followersCount = followerCount;
-            }
-
-            if (followingCountRes.ok) {
-                const { followingCount } = await followingCountRes.json();
-                followStats.followingCount = followingCount;
-            }
+            const followStats = {
+                followersCount: followersCountRes.data.followerCount || 0,
+                followingCount: followingCountRes.data.followingCount || 0
+            };
 
             setFollowStats(followStats);
+            setFollowers(followersRes.data);
+            setFollowing(followingRes.data);
+            setReviews(reviewsRes.data);
+            setFavorites(favoritesRes.data);
 
-            if (followersRes.ok) {
-                const followersData = await followersRes.json();
-                setFollowers(followersData);
-            }
-
-            if (followingRes.ok) {
-                const followingData = await followingRes.json();
-                setFollowing(followingData);
-            }
-
-            if (reviewsRes.ok) {
-                const reviewsData = await reviewsRes.json();
-                setReviews(reviewsData);
-            }
-
-            if (favoritesRes.ok) {
-                const favoritesData = await favoritesRes.json();
-                setFavorites(favoritesData);
-            }
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error fetching profile data:", error);
             dispatch(setError("Failed to load profile data"));
         } finally {
@@ -275,31 +223,19 @@ const ProfileHome = () => {
         try {
             dispatch(setLoading(true));
 
-            const response = await fetch(`${API_BASE_URL}/api/profile`, {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                credentials: "include",
-                body: JSON.stringify({
-                    email: editForm.email,
-                    role: editForm.identity,
-                    bio: editForm.bio,
-                }),
+            const response = await axiosWithCredentials.put('/api/profile', {
+                email: editForm.email,
+                role: editForm.identity,
+                bio: editForm.bio,
             });
 
-            if (response.ok) {
-                const updatedUser = await response.json();
-                dispatch(setCurrentUser(updatedUser));
-                setProfileUser(updatedUser);
-                setIsEditing(false);
-            } else {
-                const error = await response.json();
-                dispatch(setError(error.message || "Failed to update profile"));
-            }
-        } catch (error) {
+            dispatch(setCurrentUser(response.data));
+            setProfileUser(response.data);
+            setIsEditing(false);
+        } catch (error: any) {
             console.error("Error updating profile:", error);
-            dispatch(setError("Network error. Please try again."));
+            const errorMessage = error.response?.data?.message || "Failed to update profile";
+            dispatch(setError(errorMessage));
         } finally {
             dispatch(setLoading(false));
         }
@@ -310,7 +246,7 @@ const ProfileHome = () => {
             case "admin":
                 return { text: "👑 Admin", class: "verified-badge-admin" };
             case "writer":
-                return { text: "✍️ Writer", class: "verified-badge-writer" };
+                return { text: "✏️ Writer", class: "verified-badge-writer" };
             case "reader":
             default:
                 return { text: "📖 Reader", class: "verified-badge-reader" };
@@ -323,41 +259,27 @@ const ProfileHome = () => {
         setFollowLoading(true);
 
         try {
-            const url = `${API_BASE_URL}/api/follow/${profileUser._id}`;
-            const method = isFollowing ? "DELETE" : "POST";
+            const method = isFollowing ? 'delete' : 'post';
+            await axiosWithCredentials[method](`/api/follow/${profileUser._id}`);
 
-            const response = await fetch(url, {
-                method,
-                credentials: "include",
-            });
+            // Update local state
+            const newFollowingState = !isFollowing;
+            setIsFollowing(newFollowingState);
 
-            if (response.ok) {
-                // Update local state
-                const newFollowingState = !isFollowing;
-                setIsFollowing(newFollowingState);
+            // Update follower count
+            setFollowStats((prev) => ({
+                ...prev,
+                followersCount: prev.followersCount + (newFollowingState ? 1 : -1),
+            }));
 
-                // Update follower count
-                setFollowStats((prev) => ({
-                    ...prev,
-                    followersCount: prev.followersCount + (newFollowingState ? 1 : -1),
-                }));
+            // Refresh followers list to reflect the change
+            const followersRes = await axiosWithCredentials.get(`/api/followers/user/${profileUser._id}`);
+            setFollowers(followersRes.data);
 
-                // Refresh followers list to reflect the change
-                const followersRes = await fetch(
-                    `${API_BASE_URL}/api/followers/user/${profileUser._id}`,
-                    { credentials: "include" }
-                );
-                if (followersRes.ok) {
-                    const followersData = await followersRes.json();
-                    setFollowers(followersData);
-                }
-            } else {
-                const error = await response.json();
-                dispatch(setError(error.message || "Failed to update follow status"));
-            }
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error updating follow status:", error);
-            dispatch(setError("Network error. Please try again."));
+            const errorMessage = error.response?.data?.message || "Failed to update follow status";
+            dispatch(setError(errorMessage));
         } finally {
             setFollowLoading(false);
         }
