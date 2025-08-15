@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Form, Card, Button } from 'react-bootstrap';
-import { FaSearch, FaTimes, FaStar, FaHome } from 'react-icons/fa';
+import { FaSearch, FaTimes, FaHome } from 'react-icons/fa';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import './search.css';
 
@@ -148,33 +148,6 @@ export default function Search() {
         setSearchParams(new URLSearchParams());
     };
 
-    const renderStars = (rating: number, ratingsCount?: number) => {
-        // Don't render anything if rating is 0, null, undefined, or NaN
-        if (!rating || rating === 0 || isNaN(rating)) return null;
-
-        const stars = [];
-        const fullStars = Math.floor(rating);
-        const hasHalfStar = rating % 1 >= 0.5;
-
-        for (let i = 0; i < 5; i++) {
-            if (i < fullStars) {
-                stars.push(<FaStar key={i} className="star-filled" />);
-            } else if (i === fullStars && hasHalfStar) {
-                stars.push(<FaStar key={i} className="star-half" />);
-            } else {
-                stars.push(<FaStar key={i} className="star-empty" />);
-            }
-        }
-
-        return (
-            <div className="book-rating">
-                <div className="stars">{stars}</div>
-                <span className="rating-text">
-                    {rating.toFixed(1)} {ratingsCount && `(${ratingsCount})`}
-                </span>
-            </div>
-        );
-    };
 
     return (
         <div className="search-page">
