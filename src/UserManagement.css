@@ -51,15 +51,23 @@
     /* <-- center the row content */
     gap: 1rem;
     width: 100%;
-    padding-left: 56px;
-    /* <-- reserve space for the absolute Home btn */
+    padding-left: 112px;
+    /* <-- reserve space for the absolute nav buttons (2 buttons + margin) */
 }
 
-.header-home-btn {
+/* Navigation buttons container */
+.header-nav-buttons {
     position: absolute;
     left: 0;
     top: 50%;
     transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.header-home-btn,
+.header-profile-btn {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -67,6 +75,18 @@
     width: 40px;
     border-radius: 50%;
     padding: 0;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.header-home-btn:hover,
+.header-profile-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: translateY(-1px);
+    color: white;
 }
 
 .page-title {
@@ -659,6 +679,19 @@ textarea.form-input {
 @media (max-width: 768px) {
     .user-management-header-content {
         padding: 0 1rem;
+    }
+
+    .header-title-row {
+        padding-left: 0;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .header-nav-buttons {
+        position: static;
+        transform: none;
+        order: -1;
     }
 
     .page-title {

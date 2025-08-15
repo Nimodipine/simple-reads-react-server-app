@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaUsers, FaHome } from 'react-icons/fa';
+import { FaUsers, FaHome, FaUser } from 'react-icons/fa';
 import { Button } from 'react-bootstrap';
 import './UserManagement.css';
 
@@ -61,7 +61,7 @@ export default function UserProfileList() {
             case 'admin':
                 return { text: '👑 Admin', className: 'verified-badge-admin' };
             case 'writer':
-                return { text: '✏️ Writer', className: 'verified-badge-writer' };
+                return { text: '✍️ Writer', className: 'verified-badge-writer' };
             case 'reader':
             default:
                 return { text: '📖 Reader', className: 'verified-badge-reader' };
@@ -109,14 +109,24 @@ export default function UserProfileList() {
                     <div className="user-management-header-content">
                         <div className="header-title-section">
                             <div className="header-title-row">
-                                <Button
-                                    variant="outline-light"
-                                    className="header-home-btn"
-                                    onClick={() => navigate('/home')}
-                                    title="Go to Home"
-                                >
-                                    <FaHome />
-                                </Button>
+                                <div className="header-nav-buttons">
+                                    <Button
+                                        variant="outline-light"
+                                        className="header-home-btn"
+                                        onClick={() => navigate('/home')}
+                                        title="Go to Home"
+                                    >
+                                        <FaHome />
+                                    </Button>
+                                    <Button
+                                        variant="outline-light"
+                                        className="header-profile-btn"
+                                        onClick={() => navigate('/Account/Profile')}
+                                        title="Go to Profile"
+                                    >
+                                        <FaUser />
+                                    </Button>
+                                </div>
                                 <h1 className="page-title">
                                     <FaUsers className="title-icon" />
                                     User Profiles

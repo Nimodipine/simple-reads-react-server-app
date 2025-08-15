@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Button, Alert } from 'react-bootstrap';
-import { FaUsers, FaTrash, FaPlus, FaEdit, FaHome } from 'react-icons/fa';
+import { FaUsers, FaTrash, FaPlus, FaEdit, FaHome, FaUser } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import './UserManagement.css';
 
@@ -326,14 +326,24 @@ export default function UserManagement() {
                     <div className="user-management-header-content">
                         <div className="header-title-section">
                             <div className="header-title-row">
-                                <Button
-                                    variant="outline-light"
-                                    className="header-home-btn"
-                                    onClick={() => navigate('/home')}
-                                    title="Go to Home"
-                                >
-                                    <FaHome />
-                                </Button>
+                                <div className="header-nav-buttons">
+                                    <Button
+                                        variant="outline-light"
+                                        className="header-home-btn"
+                                        onClick={() => navigate('/home')}
+                                        title="Go to Home"
+                                    >
+                                        <FaHome />
+                                    </Button>
+                                    <Button
+                                        variant="outline-light"
+                                        className="header-profile-btn"
+                                        onClick={() => navigate('/Account/Profile')}
+                                        title="Go to Profile"
+                                    >
+                                        <FaUser />
+                                    </Button>
+                                </div>
                                 <h1 className="page-title">
                                     <FaUsers className="title-icon" />
                                     User Management
