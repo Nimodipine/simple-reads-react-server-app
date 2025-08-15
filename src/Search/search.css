@@ -224,8 +224,9 @@
 
 .book-authors {
     margin: 0 0 0.25rem;
-    color: #355a8a;
+    color: #5dade2;
     font-size: 0.9rem;
+    font-weight: 500;
 }
 
 /* Rating stars */
@@ -258,8 +259,8 @@
 
 /* Description (multi-line clamp) */
 .book-description {
-    margin: 0.3rem 0 0.4rem;
-    color: #2e4466;
+    margin: 1.5rem 0 0.4rem;
+    color: #4a5568;
     font-size: 0.92rem;
     line-height: 1.35rem;
 

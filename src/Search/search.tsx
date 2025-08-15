@@ -149,7 +149,8 @@ export default function Search() {
     };
 
     const renderStars = (rating: number, ratingsCount?: number) => {
-        if (!rating) return null;
+        // Don't render anything if rating is 0, null, undefined, or NaN
+        if (!rating || rating === 0 || isNaN(rating)) return null;
 
         const stars = [];
         const fullStars = Math.floor(rating);
@@ -323,7 +324,7 @@ export default function Search() {
                                                             {book.authors.join(', ')}
                                                         </p>
 
-                                                        {book.averageRating && renderStars(book.averageRating, book.ratingsCount)}
+
 
                                                         <p className="book-description">
                                                             {book.description.length > 150
