@@ -310,7 +310,7 @@ const ProfileHome = () => {
             case "admin":
                 return { text: "👑 Admin", class: "verified-badge-admin" };
             case "writer":
-                return { text: "✏️ Writer", class: "verified-badge-writer" };
+                return { text: "✍️ Writer", class: "verified-badge-writer" };
             case "reader":
             default:
                 return { text: "📖 Reader", class: "verified-badge-reader" };
@@ -556,27 +556,25 @@ const ProfileHome = () => {
                                     </button>
                                 )}
 
-                                {/* Navigation Icon Buttons */}
-                                {currentUser && (
-                                    <div className="nav-icon-buttons">
+                                {/* Navigation Icon Buttons - Fixed Logic */}
+                                <div className="nav-icon-buttons">
+                                    <button
+                                        onClick={navigateToHome}
+                                        className="icon-btn home-btn"
+                                        title="Go to Home"
+                                    >
+                                        🏠
+                                    </button>
+                                    {currentUser && !isOwnProfile && (
                                         <button
-                                            onClick={navigateToHome}
-                                            className="icon-btn home-btn"
-                                            title="Go to Home"
+                                            onClick={navigateToOwnProfile}
+                                            className="icon-btn profile-btn"
+                                            title="Go to My Profile"
                                         >
-                                            🏠
+                                            👤
                                         </button>
-                                        {!isOwnProfile && (
-                                            <button
-                                                onClick={navigateToOwnProfile}
-                                                className="icon-btn profile-btn"
-                                                title="Go to My Profile"
-                                            >
-                                                👤
-                                            </button>
-                                        )}
-                                    </div>
-                                )}
+                                    )}
+                                </div>
                             </div>
                         )}
                     </div>
