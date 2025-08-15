@@ -34,6 +34,7 @@ export default function Header({ isLoggedIn, user }: HeaderProps) {
             // (session might already be expired)
             dispatch(setCurrentUser(null));
             navigate("/home");
+            // Don't show error to user for signout - just complete the action
         }
     };
 

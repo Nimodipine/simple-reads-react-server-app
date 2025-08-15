@@ -44,6 +44,7 @@ export default function UserProfileList() {
 
             if (error.response?.status === 401) {
                 setError('Unable to load users at this time');
+                // Don't auto-redirect - let the page show the error message
             } else {
                 setError(error.response?.data?.message || 'Failed to fetch users');
             }

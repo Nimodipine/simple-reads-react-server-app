@@ -37,10 +37,8 @@ axiosWithCredentials.interceptors.response.use(
             // Handle unauthorized access
             console.warn('Unauthorized access - user may need to sign in again');
 
-            // Optionally redirect to signin page
-            if (window.location.pathname !== '/Account/Signin') {
-                window.location.href = '/#/Account/Signin';
-            }
+            // DO NOT automatically redirect - let each component handle it
+            // Components will show their own sign-in required screens
         }
 
         return Promise.reject(error);

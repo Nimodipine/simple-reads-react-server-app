@@ -87,6 +87,7 @@ export default function Signup() {
 
             dispatch(setError(errorMessage));
             setErrors({ general: errorMessage });
+            // DO NOT auto-redirect on error - let user see the error and try again
         } finally {
             dispatch(setLoading(false));
         }

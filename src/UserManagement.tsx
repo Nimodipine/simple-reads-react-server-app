@@ -2,9 +2,8 @@ import { useState, useEffect } from 'react';
 import { Button, Alert } from 'react-bootstrap';
 import { FaUsers, FaTrash, FaPlus, FaEdit, FaHome, FaUser } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
-import './UserManagement.css';
 import axiosWithCredentials from './client';
-
+import './UserManagement.css';
 
 interface User {
     _id: string;
@@ -30,8 +29,8 @@ interface UserFormData {
 export default function UserManagement() {
     const navigate = useNavigate();
     const [users, setUsers] = useState<User[]>([]);
-    const [allUsers, setAllUsers] = useState<User[]>([]); // Store all users for filtering
-    const [, setLoading] = useState(true);
+    const [allUsers, setAllUsers] = useState<User[]>([]);
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [deleteConfirm, setDeleteConfirm] = useState<User | null>(null);
@@ -52,33 +51,39 @@ export default function UserManagement() {
         fetchCurrentUser();
     }, []);
 
+    useEffect(() => {
+        fetchUsers();
+    }, []);
 
-    // Replace the fetchCurrentUser function:
     const fetchCurrentUser = async () => {
         try {
             const response = await axiosWithCredentials.get('/api/profile');
             setCurrentUser(response.data);
         } catch (error: any) {
+            console.error('Error fetching current user:', error);
             if (error.response?.status === 401) {
                 setCurrentUser(null);
                 setError('Please sign in to view this page');
+                // DO NOT auto-redirect - show the sign-in required page instead
             } else {
-                console.error('Error fetching current user:', error);
                 setError('Failed to load user profile');
             }
         }
     };
 
-    // Replace the fetchUsers function:
     const fetchUsers = async () => {
         try {
             setLoading(true);
             setError('');
 
             const response = await axiosWithCredentials.get('/api/users');
+            console.log('Users fetched:', response.data); // Debug log
+
             setAllUsers(response.data);
             setUsers(response.data);
         } catch (error: any) {
+            console.error('Error fetching users:', error);
+
             if (error.response?.status === 401) {
                 setError('Please sign in to view users');
             } else {
@@ -89,11 +94,10 @@ export default function UserManagement() {
         }
     };
 
-    // Replace the handleDeleteUser function:
     const handleDeleteUser = async (userId: string) => {
         try {
-            const response = await axiosWithCredentials.delete(`/api/admin/users/${userId}`);
-            alert(`User deleted successfully: ${response.data.message}`);
+            await axiosWithCredentials.delete(`/api/admin/users/${userId}`);
+            alert('User deleted successfully!');
             fetchUsers();
         } catch (error: any) {
             const errorMessage = error.response?.data?.message || 'Failed to delete user';
@@ -104,13 +108,11 @@ export default function UserManagement() {
         }
     };
 
-    // Replace the handleAddUser function:
     const handleAddUser = async () => {
         try {
             await axiosWithCredentials.post('/api/users/signup', userForm);
             alert('User created successfully!');
 
-            // Reset form and close modal
             setUserForm({
                 username: '',
                 email: '',
@@ -126,7 +128,6 @@ export default function UserManagement() {
         }
     };
 
-    // Replace the handleEditUser function:
     const handleEditUser = async () => {
         if (!editingUser) return;
 
@@ -134,7 +135,6 @@ export default function UserManagement() {
             await axiosWithCredentials.put(`/api/admin/users/${editingUser._id}`, userForm);
             alert('User updated successfully!');
 
-            // Reset form and close modal
             setUserForm({
                 username: '',
                 email: '',
@@ -167,7 +167,7 @@ export default function UserManagement() {
         setUserForm({
             username: user.username,
             email: user.email,
-            password: '', // Don't pre-fill password
+            password: '',
             role: user.role,
             bio: user.bio || ''
         });
@@ -195,7 +195,6 @@ export default function UserManagement() {
         const value = e.target.value;
         setSearchTerm(value);
 
-        // Filter users locally based on search term
         if (value.trim()) {
             const filteredUsers = allUsers.filter(user =>
                 user.username.toLowerCase().includes(value.toLowerCase()) ||
@@ -208,6 +207,21 @@ export default function UserManagement() {
         }
     };
 
+    // Show loading state
+    if (loading) {
+        return (
+            <div className="user-management-container">
+                <div className="user-management-wrapper">
+                    <div className="loading-container">
+                        <div className="loading-spinner"></div>
+                        <p>Loading users...</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // Show authentication error
     if (error && error.includes('sign in')) {
         return (
             <div className="user-management-container">
@@ -215,17 +229,20 @@ export default function UserManagement() {
                     <FaUsers size={64} className="auth-icon" />
                     <h2>Authentication Required</h2>
                     <p>Please sign in to access the user management page.</p>
-                    <button
-                        onClick={() => window.location.href = "/#/Account/Signin"}
-                        className="btn-primary auth-btn"
+                    <Button
+                        variant="primary"
+                        onClick={() => navigate('/Account/Signin')}
+                        className="auth-btn"
+                        size="lg"
                     >
                         Go to Sign In
-                    </button>
+                    </Button>
                 </div>
             </div>
         );
     }
 
+    // Show if no current user
     if (!currentUser) {
         return (
             <div className="user-management-container">
@@ -233,17 +250,20 @@ export default function UserManagement() {
                     <FaUsers size={64} className="auth-icon" />
                     <h2>Authentication Required</h2>
                     <p>Please sign in to access the user management page.</p>
-                    <button
-                        onClick={() => window.location.href = "/#/Account/Signin"}
-                        className="btn-primary auth-btn"
+                    <Button
+                        variant="primary"
+                        onClick={() => navigate('/Account/Signin')}
+                        className="auth-btn"
+                        size="lg"
                     >
                         Go to Sign In
-                    </button>
+                    </Button>
                 </div>
             </div>
         );
     }
 
+    // Show access denied for non-admin
     if (currentUser.role !== 'admin') {
         return (
             <div className="user-management-container">
@@ -251,12 +271,14 @@ export default function UserManagement() {
                     <FaUsers size={64} className="auth-icon" />
                     <h2>Access Denied</h2>
                     <p>Only administrators can access the user management page.</p>
-                    <button
-                        onClick={() => window.location.href = "/#/home"}
-                        className="btn-primary auth-btn"
+                    <Button
+                        variant="primary"
+                        onClick={() => navigate('/home')}
+                        className="auth-btn"
+                        size="lg"
                     >
                         Go to Home
-                    </button>
+                    </Button>
                 </div>
             </div>
         );
@@ -328,7 +350,7 @@ export default function UserManagement() {
                                 <div className="error-container">
                                     <Alert variant="danger" className="error-alert">
                                         <p>Error: {error}</p>
-                                        <Button variant="primary" onClick={() => fetchUsers()} className="retry-btn">
+                                        <Button variant="primary" onClick={fetchUsers} className="retry-btn">
                                             Retry
                                         </Button>
                                     </Alert>
@@ -368,7 +390,7 @@ export default function UserManagement() {
                                                     </div>
                                                 </div>
 
-                                                {/* Actions - Always show for admin */}
+                                                {/* Actions */}
                                                 <div className="user-actions">
                                                     {user._id !== currentUser._id ? (
                                                         <div className="action-buttons">

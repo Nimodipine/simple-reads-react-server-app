@@ -386,7 +386,7 @@ const BookInfo: React.FC = () => {
                             You need to be signed in to view detailed book information,
                             write reviews, and manage your favorites.
                         </p>
-                        <div className="d-flex gap-2 justify-content-center" style={{ marginTop: '30px', marginLeft: '20px' }}>
+                        <div className="d-flex gap-3 justify-content-center" style={{ marginTop: '30px' }}>
                             <Button
                                 variant="primary"
                                 onClick={handleSignIn}
@@ -398,7 +398,6 @@ const BookInfo: React.FC = () => {
                                 variant="outline-secondary"
                                 onClick={handleBackNavigation}
                                 size="lg"
-                                style={{ marginLeft: '15px' }}
                             >
                                 <FaArrowLeft className="me-2" />
                                 Go Back
