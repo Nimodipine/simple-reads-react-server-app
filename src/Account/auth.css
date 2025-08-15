@@ -91,6 +91,14 @@
     border: 2px solid transparent !important;
     transition: all 0.2s ease !important;
     box-shadow: none !important;
+
+    padding-left: 0.5rem;
+
+    min-width: 280px;
+}
+
+.auth-input::placeholder {
+    padding-left: 0.5rem;
 }
 
 .auth-input:focus {
