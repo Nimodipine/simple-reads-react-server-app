@@ -391,6 +391,7 @@ const BookInfo: React.FC = () => {
                                 variant="primary"
                                 onClick={handleSignIn}
                                 size="lg"
+                                style={{ marginRight: '15px' }}
                             >
                                 Sign In
                             </Button>
