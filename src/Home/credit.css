@@ -1,0 +1,66 @@
+/* Credit Component Styles - Blue Theme */
+
+/* Main Layout */
+.credit-layout {
+    background-color: #e3f2fd;
+    /* Light blue background */
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+/* Credit Content */
+.credit-content {
+    text-align: center;
+    margin-top: 2rem;
+    margin-left: 2rem;
+    color: #424242;
+    font-size: 1rem;
+    line-height: 1.8;
+}
+
+.credit-content div {
+    color: #424242;
+}
+
+/* Credit Links */
+.credit-content a {
+    color: #1976d2;
+    /* Primary blue for links */
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.credit-content a:hover {
+    color: #1565c0;
+    /* Darker blue on hover */
+    text-decoration: underline;
+}
+
+.credit-content a:visited {
+    color: #7b1fa2;
+    /* Purple for visited links */
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .credit-layout {
+        padding: 1rem;
+    }
+
+    .credit-content {
+        margin-left: 1rem;
+        margin-top: 1rem;
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .credit-content {
+        margin-left: 0.5rem;
+        margin-top: 0.5rem;
+        font-size: 0.85rem;
+    }
+}

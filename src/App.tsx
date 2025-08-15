@@ -5,6 +5,7 @@ import Signup from "./Account/Signup";
 import Profile from "./Account/Profile";
 import Search from "./Search/search";
 import BookInfo from "./Search/bookinfo";
+import Credit from "./Home/credit";
 import { Provider } from "react-redux";
 import { store } from "./store";
 import UserManagement from "./UserManagement";
@@ -25,6 +26,7 @@ export default function App() {
           <Route path="/search" element={<Search />} />
           <Route path="/users-list" element={<UserProfileList />} />
           <Route path="/users" element={<UserManagement />} />
+          <Route path="/credit" element={<Credit />} />
           {/* Add the book details route */}
           <Route path="/details/:googleId" element={<BookInfo />} />
           {/* Optional: You can also add the alternative route pattern */}
