@@ -12,11 +12,9 @@ import {
     FaLock,
     FaHome,
 } from "react-icons/fa";
+import axiosWithCredentials from "../client";
 import "./detail.css";
 import "./bookinfo.css";
-
-const API_BASE_URL =
-    (import.meta as any)?.env?.VITE_REMOTE_SERVER || "http://localhost:4000";
 
 // ---- Types ----
 interface Book {
@@ -63,15 +61,7 @@ interface CurrentUser {
     role?: string;
 }
 
-interface BookDetailsSuccess {
-    success: true;
-    book: Book;
-}
-interface BookDetailsError {
-    success: false;
-    message?: string;
-}
-type BookDetailsResponse = BookDetailsSuccess | BookDetailsError;
+// BookDetailsResponse types removed - no longer needed with axios
 
 const BookInfo: React.FC = () => {
     const { googleId } = useParams<{ googleId: string }>();
@@ -105,38 +95,13 @@ const BookInfo: React.FC = () => {
             setAuthLoading(true);
             console.log("Checking authentication status...");
 
-            const res = await fetch(`${API_BASE_URL}/api/profile`, {
-                credentials: "include",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-            });
+            const response = await axiosWithCredentials.get('/api/profile');
+            console.log("User authenticated:", response.data);
+            setIsAuthenticated(true);
+            setCurrentUser(response.data);
 
-            console.log("Auth check response status:", res.status);
-
-            if (res.status === 401) {
-                console.log("User not authenticated");
-                setIsAuthenticated(false);
-                setCurrentUser(null);
-                return;
-            }
-
-            const isJSON = res.headers
-                .get("content-type")
-                ?.includes("application/json");
-
-            if (res.ok && isJSON) {
-                const userData = await res.json();
-                console.log("User authenticated:", userData);
-                setIsAuthenticated(true);
-                setCurrentUser(userData);
-            } else {
-                console.log("Authentication check failed");
-                setIsAuthenticated(false);
-                setCurrentUser(null);
-            }
-        } catch (e) {
-            console.error("Error checking authentication:", e);
+        } catch (error: any) {
+            console.log("User not authenticated");
             setIsAuthenticated(false);
             setCurrentUser(null);
         } finally {
@@ -162,11 +127,10 @@ const BookInfo: React.FC = () => {
     };
 
     const handleSignIn = () => {
-        // Navigate to sign-in page with return URL to come back to this book
         navigate('/Account/Signin', {
             state: {
                 returnTo: `/details/${googleId}`,
-                bookTitle: book?.title // Optional: pass book title for better UX
+                bookTitle: book?.title
             }
         });
     };
@@ -176,33 +140,21 @@ const BookInfo: React.FC = () => {
         try {
             setIsLoading(true);
             setError(null);
-            const res = await fetch(`${API_BASE_URL}/api/books/${googleId}`);
-            const isJSON = res.headers
-                .get("content-type")
-                ?.includes("application/json");
 
-            if (!res.ok) {
-                const data = isJSON
-                    ? ((await res.json()) as BookDetailsResponse)
-                    : undefined;
-                setError(
-                    (data && "message" in data && data.message) ||
-                    (res.status === 404
-                        ? "Book not found"
-                        : "Failed to load book details")
-                );
-                return;
+            const response = await axiosWithCredentials.get(`/api/books/${googleId}`);
+
+            if (response.data.success === true) {
+                setBook(response.data.book);
+            } else {
+                setError(response.data.message ?? "Book not found");
             }
-            if (!isJSON) {
+        } catch (error: any) {
+            console.error("Error fetching book details:", error);
+            if (error.response?.status === 404) {
+                setError("Book not found");
+            } else {
                 setError("Failed to load book details");
-                return;
             }
-            const data = (await res.json()) as BookDetailsResponse;
-            if (data.success === true) setBook(data.book);
-            else setError(data.message ?? "Book not found");
-        } catch (e) {
-            console.error("book", e);
-            setError("Failed to load book details");
         } finally {
             setIsLoading(false);
         }
@@ -211,12 +163,10 @@ const BookInfo: React.FC = () => {
     const fetchBookReviews = async () => {
         try {
             setReviewsLoading(true);
-            const res = await fetch(`${API_BASE_URL}/api/reviews/book/${googleId}`);
-            const isJSON = res.headers
-                .get("content-type")
-                ?.includes("application/json");
-            setReviews(res.ok && isJSON ? await res.json() : []);
-        } catch {
+            const response = await axiosWithCredentials.get(`/api/reviews/book/${googleId}`);
+            setReviews(response.data || []);
+        } catch (error) {
+            console.error("Error fetching reviews:", error);
             setReviews([]);
         } finally {
             setReviewsLoading(false);
@@ -225,20 +175,14 @@ const BookInfo: React.FC = () => {
 
     const checkIfFavorited = async () => {
         try {
-            const res = await fetch(`${API_BASE_URL}/api/favorites`, {
-                credentials: "include",
-            });
-            const isJSON = res.headers
-                .get("content-type")
-                ?.includes("application/json");
-            if (res.ok && isJSON) {
-                const favorites = await res.json();
-                setIsFavorited(
-                    Array.isArray(favorites) &&
-                    favorites.some((f: any) => f.book === googleId)
-                );
-            }
-        } catch {
+            const response = await axiosWithCredentials.get('/api/favorites');
+            const favorites = response.data;
+            setIsFavorited(
+                Array.isArray(favorites) &&
+                favorites.some((f: any) => f.book === googleId)
+            );
+        } catch (error) {
+            console.error("Error checking favorites:", error);
             setIsFavorited(false);
         }
     };
@@ -253,35 +197,20 @@ const BookInfo: React.FC = () => {
         setIsTogglingFavorite(true);
 
         try {
-            const method = isFavorited ? "DELETE" : "POST";
-            const url = `${API_BASE_URL}/api/favorites/${googleId}`;
+            const method = isFavorited ? 'delete' : 'post';
+            await axiosWithCredentials[method](`/api/favorites/${googleId}`);
 
-            const response = await fetch(url, {
-                method,
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                credentials: "include",
-            });
+            setIsFavorited(!isFavorited);
+            console.log(isFavorited ? "Removed from favorites" : "Added to favorites");
 
-            if (response.ok) {
-                setIsFavorited(!isFavorited);
-                console.log(
-                    isFavorited ? "Removed from favorites" : "Added to favorites"
-                );
+        } catch (error: any) {
+            console.error("Error toggling favorite:", error);
+
+            if (error.response?.status === 401) {
+                alert("Please sign in again to manage favorites");
             } else {
-                const errorData = await response.json().catch(() => ({}));
-                console.error("Failed to toggle favorite:", response.status, errorData);
-
-                if (response.status === 401) {
-                    alert("Please sign in again to manage favorites");
-                } else {
-                    alert(errorData.message || "Failed to update favorites");
-                }
+                alert(error.response?.data?.message || "Failed to update favorites");
             }
-        } catch (error) {
-            console.error("Network error toggling favorite:", error);
-            alert("Network error. Please try again.");
         } finally {
             setIsTogglingFavorite(false);
         }
@@ -305,68 +234,42 @@ const BookInfo: React.FC = () => {
         const isEditing = isEditingReview && !!userReview;
 
         try {
-            let response;
+            const reviewData = {
+                title: reviewTitle.trim(),
+                content: reviewContent.trim(),
+                rating: reviewRating,
+            };
+
             if (isEditing && userReview) {
-                response = await fetch(
-                    `${API_BASE_URL}/api/reviews/${userReview._id}`,
-                    {
-                        method: "PUT",
-                        headers: {
-                            "Content-Type": "application/json",
-                        },
-                        credentials: "include",
-                        body: JSON.stringify({
-                            title: reviewTitle.trim(),
-                            content: reviewContent.trim(),
-                            rating: reviewRating,
-                        }),
-                    }
-                );
+                await axiosWithCredentials.put(`/api/reviews/${userReview._id}`, reviewData);
             } else {
-                response = await fetch(`${API_BASE_URL}/api/reviews`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    credentials: "include",
-                    body: JSON.stringify({
-                        book: googleId,
-                        title: reviewTitle.trim(),
-                        content: reviewContent.trim(),
-                        rating: reviewRating,
-                    }),
+                await axiosWithCredentials.post('/api/reviews', {
+                    ...reviewData,
+                    book: googleId,
                 });
             }
 
-            if (response.ok) {
-                setReviewTitle("");
-                setReviewContent("");
-                setReviewRating(0);
-                setIsEditingReview(false);
-                await fetchBookReviews();
-                await fetchBookDetails();
-                setReviewError(null);
-                setReviewSuccess(
-                    isEditing
-                        ? "Review updated successfully!"
-                        : "Review submitted successfully!"
-                );
-            } else {
-                const errorData = await response.json().catch(() => ({}));
-                if (response.status === 401) {
-                    setReviewError(
-                        "Authentication required. Please sign in again and try submitting your review."
-                    );
-                } else {
-                    setReviewError(
-                        errorData.message || `Failed to submit review (${response.status})`
-                    );
-                }
-            }
-        } catch (error) {
-            setReviewError(
-                "Network error. Please check your connection and try again."
+            setReviewTitle("");
+            setReviewContent("");
+            setReviewRating(0);
+            setIsEditingReview(false);
+            await fetchBookReviews();
+            await fetchBookDetails();
+            setReviewError(null);
+            setReviewSuccess(
+                isEditing ? "Review updated successfully!" : "Review submitted successfully!"
             );
+
+        } catch (error: any) {
+            console.error("Error submitting review:", error);
+
+            if (error.response?.status === 401) {
+                setReviewError("Authentication required. Please sign in again and try submitting your review.");
+            } else {
+                setReviewError(
+                    error.response?.data?.message || `Failed to submit review (${error.response?.status || 'Network Error'})`
+                );
+            }
         } finally {
             setIsSubmittingReview(false);
         }
@@ -375,12 +278,9 @@ const BookInfo: React.FC = () => {
     // --------- Effects ----------
     useEffect(() => {
         if (!googleId) return;
-
-        // First check authentication
         checkAuthentication();
     }, [googleId]);
 
-    // Only fetch data after authentication is confirmed
     useEffect(() => {
         if (!googleId || isAuthenticated === null) return;
 
@@ -557,9 +457,8 @@ const BookInfo: React.FC = () => {
     return (
         <div className="book-info-page">
             <Container className="py-4">
-                {/* Navigation Buttons - Only show when authenticated */}
+                {/* Navigation Buttons */}
                 <div style={{ position: 'relative' }}>
-                    {/* Back Button */}
                     <Button
                         variant="outline-primary"
                         onClick={handleBackNavigation}
@@ -582,7 +481,6 @@ const BookInfo: React.FC = () => {
                         <FaArrowLeft style={{ fontSize: '20px' }} />
                     </Button>
 
-                    {/* Home Button */}
                     <Button
                         variant="outline-primary"
                         onClick={() => navigate('/home')}
@@ -606,8 +504,7 @@ const BookInfo: React.FC = () => {
                     </Button>
                 </div>
 
-                {/* Rest of your existing JSX for the book info display... */}
-                {/* SECTION 1: Book Info */}
+                {/* Book Info Section */}
                 <section className="book-info-card p-4 mb-4">
                     <header className="book-header">
                         <h1 className="book-title">{book.title || "Untitled"}</h1>
@@ -630,7 +527,6 @@ const BookInfo: React.FC = () => {
                     </header>
 
                     <div className="book-content-row mt-3">
-                        {/* Image and Metadata Section */}
                         <div className="book-image-metadata-section">
                             <div className="book-image-column">
                                 {book.image || book.thumbnail ? (
@@ -680,9 +576,7 @@ const BookInfo: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* Details Section */}
                         <div className="book-details-column">
-                            {/* Categories */}
                             <div className="categories-section">
                                 <div className="section-title">Categories</div>
                                 <div className="categories-list">
@@ -701,7 +595,6 @@ const BookInfo: React.FC = () => {
                                 </div>
                             </div>
 
-                            {/* Favorite Button */}
                             <div className="favorite-section">
                                 <Button
                                     variant={isFavorited ? "danger" : "outline-danger"}
@@ -728,7 +621,6 @@ const BookInfo: React.FC = () => {
                                 </Button>
                             </div>
 
-                            {/* Description */}
                             {book.description && (
                                 <div className="book-description">
                                     <div className="section-title">Description</div>
@@ -785,22 +677,11 @@ const BookInfo: React.FC = () => {
                                                             onClick={async () => {
                                                                 if (!confirm("Delete this review?")) return;
                                                                 try {
-                                                                    const res = await fetch(
-                                                                        `${API_BASE_URL}/api/reviews/${review._id}`,
-                                                                        {
-                                                                            method: "DELETE",
-                                                                            credentials: "include",
-                                                                        }
-                                                                    );
-                                                                    if (res.ok) {
-                                                                        fetchBookReviews();
-                                                                        fetchBookDetails();
-                                                                    } else {
-                                                                        const d = await res.json();
-                                                                        alert(d.message || "Error deleting review");
-                                                                    }
-                                                                } catch (e) {
-                                                                    alert("Error deleting review");
+                                                                    await axiosWithCredentials.delete(`/api/reviews/${review._id}`);
+                                                                    fetchBookReviews();
+                                                                    fetchBookDetails();
+                                                                } catch (error: any) {
+                                                                    alert(error.response?.data?.message || "Error deleting review");
                                                                 }
                                                             }}
                                                         >
@@ -969,7 +850,6 @@ const BookInfo: React.FC = () => {
                                                     </div>
                                                     <div className="review-actions">
                                                         {renderStars(review.rating, undefined, false)}
-                                                        {/* Show delete button for writers or review owners */}
                                                         {currentUser && (
                                                             currentUser.role === "writer" ||
                                                             review.user._id === currentUser._id
@@ -986,22 +866,11 @@ const BookInfo: React.FC = () => {
                                                                             if (!confirm(confirmMessage)) return;
 
                                                                             try {
-                                                                                const res = await fetch(
-                                                                                    `${API_BASE_URL}/api/reviews/${review._id}`,
-                                                                                    {
-                                                                                        method: "DELETE",
-                                                                                        credentials: "include",
-                                                                                    }
-                                                                                );
-                                                                                if (res.ok) {
-                                                                                    fetchBookReviews();
-                                                                                    fetchBookDetails();
-                                                                                } else {
-                                                                                    const d = await res.json();
-                                                                                    alert(d.message || "Error deleting review");
-                                                                                }
-                                                                            } catch (e) {
-                                                                                alert("Error deleting review");
+                                                                                await axiosWithCredentials.delete(`/api/reviews/${review._id}`);
+                                                                                fetchBookReviews();
+                                                                                fetchBookDetails();
+                                                                            } catch (error: any) {
+                                                                                alert(error.response?.data?.message || "Error deleting review");
                                                                             }
                                                                         }}
                                                                         title={review.user._id === currentUser._id
