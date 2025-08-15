@@ -610,6 +610,15 @@ export default function Home() {
                         </Col>
                     </Row>
                 </Container>
+                {/* Credits Section */}
+                <div className="home-credits-section" style={{ textAlign: "center", margin: "2rem 0", fontSize: "1rem", color: "#718096" }}>
+                    <hr style={{ margin: "2rem auto", maxWidth: "400px" }} />
+                    <div>
+                        Wei-Yun Feng, Sujie Zong <br />5610 Summer2 2025<br />
+                        <a href="https://github.com/Nimodipine/simple-reads-react-server-app.git" target="_blank" rel="noopener noreferrer">https://github.com/Nimodipine/simple-reads-react-server-app.git</a><br />
+                        <a href="https://github.com/SujieZong/simple-reads-node-server-app.git" target="_blank" rel="noopener noreferrer">https://github.com/SujieZong/simple-reads-node-server-app.git</a>
+                    </div>
+                </div>
             </div>
         </div>
     );
