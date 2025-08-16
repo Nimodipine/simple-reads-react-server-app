@@ -254,7 +254,12 @@ const ProfileHome = () => {
     };
 
     const handleFollow = async () => {
-        if (!profileUser || !currentUser || followLoading) return;
+        if (!profileUser) return;
+        if (!currentUser) {
+            window.location.href = "/#/Account/Signin";
+            return;
+        }
+        if (followLoading) return;
 
         setFollowLoading(true);
 
