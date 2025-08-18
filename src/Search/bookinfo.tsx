@@ -616,7 +616,7 @@ const BookInfo: React.FC = () => {
                                     {isTogglingFavorite
                                         ? "Updating..."
                                         : isFavorited
-                                            ? "Remove from Favorites"
+                                            ? " Remove from Favorites"
                                             : "Add to Favorites"}
                                 </Button>
                             </div>
